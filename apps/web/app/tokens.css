@@ -1,0 +1,42 @@
+/*
+ * Dense Matrix tokens — web edition.
+ * Mirrors the root /src/design/tokens.css verbatim. The web stack can
+ * actually consume the oklch values natively, so unlike the RN port we
+ * don't lose any fidelity here.
+ */
+
+:root {
+  --bg:           oklch(12% 0.01  260);
+  --surface:      oklch(16% 0.015 260);
+  --fg:           oklch(95% 0.005 260);
+  --muted:        oklch(45% 0.01  260);
+  --border:       oklch(22% 0.02  260);
+  --accent:       oklch(70% 0.18  50);
+
+  --accent-soft:  color-mix(in oklch, var(--accent) 12%, transparent);
+  --accent-glow:  color-mix(in oklch, var(--accent) 40%, transparent);
+  --fg-soft:      color-mix(in oklch, var(--fg)      5%, transparent);
+
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text',    system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  --fs-h1:     clamp(48px, 8vw, 96px);
+  --fs-h2:     clamp(32px, 4vw, 56px);
+  --fs-h3:     24px;
+  --fs-lead:   20px;
+  --fs-body:   15px;
+  --fs-meta:   11px;
+  --fs-bignum: clamp(40px, 5vw, 72px);
+
+  --radius:      2px;
+  --radius-card: 4px;
+  --hairline:    0.5px solid var(--border);
+
+  --gap-xs: 4px;
+  --gap-sm: 8px;
+  --gap-md: 16px;
+  --gap-lg: 40px;
+  --gap-xl: 80px;
+  --container: 1400px;
+}

@@ -1,0 +1,118 @@
+@import "./tokens.css";
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+::selection { background: var(--accent-soft); color: var(--fg); }
+
+a { color: var(--accent); text-decoration: none; }
+
+/* Type primitives — mirror the iOS Text variants */
+.num     { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.meta    { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--muted);
+           text-transform: uppercase; letter-spacing: 0.12em; }
+.eyebrow { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--accent);
+           text-transform: uppercase; letter-spacing: 0.22em; }
+.h1      { font-family: var(--font-display); font-size: var(--fs-h1);
+           font-weight: 800; letter-spacing: -0.05em; line-height: 0.92; margin: 0; }
+.h2      { font-family: var(--font-display); font-size: var(--fs-h2);
+           font-weight: 800; letter-spacing: -0.04em; line-height: 1.0; margin: 0; }
+.h3      { font-family: var(--font-display); font-size: var(--fs-h3);
+           font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+.bignum  { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+           font-size: var(--fs-bignum); font-weight: 800; letter-spacing: -0.04em;
+           line-height: 1; color: var(--fg); }
+
+.container { max-width: var(--container); margin-inline: auto; padding-inline: var(--gap-md); }
+
+/* Sticky topnav */
+.topnav {
+  position: sticky; top: 0; z-index: 50;
+  border-bottom: var(--hairline);
+  background: color-mix(in oklch, var(--bg) 90%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.topnav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.topnav-logo  { font-weight: 900; letter-spacing: -0.02em; }
+.topnav nav   { display: flex; gap: var(--gap-lg); }
+.topnav nav a { color: var(--muted); font-family: var(--font-mono); font-size: var(--fs-meta);
+                text-transform: uppercase; letter-spacing: 0.12em; transition: color .15s; }
+.topnav nav a:hover { color: var(--fg); }
+.topnav nav a.active { color: var(--accent); }
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius);
+  padding: var(--gap-md);
+}
+.card-lg { padding: var(--gap-lg); }
+
+/* Telemetry grid — 1px gap on a border-colored background = the border IS the gap */
+.tg {
+  display: grid;
+  gap: 0.5px;
+  background: var(--border);
+  border: var(--hairline);
+}
+.tg-cell { background: var(--bg); padding: var(--gap-md); display: flex; flex-direction: column; gap: var(--gap-sm); }
+.tg-2 { grid-template-columns: repeat(2, 1fr); }
+.tg-3 { grid-template-columns: repeat(3, 1fr); }
+.tg-4 { grid-template-columns: repeat(4, 1fr); }
+.tg-cell-span-2 { grid-column: span 2; }
+
+/* Hairline divider */
+.hr { height: 0.5px; background: var(--border); border: 0; margin: 0; }
+
+/* Layout helpers */
+.row { display: flex; gap: var(--gap-md); }
+.col { display: flex; flex-direction: column; gap: var(--gap-md); }
+.between { justify-content: space-between; }
+.baseline { align-items: baseline; }
+.flex1 { flex: 1; }
+
+/* Runway track (re-used from prototype) */
+.runway-track {
+  position: relative;
+  height: 56px;
+  background: var(--fg-soft);
+  overflow: hidden;
+}
+.runway-fill {
+  position: relative;
+  height: 100%;
+  background: var(--accent);
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.10) 4px, rgba(0,0,0,0.10) 8px);
+}
+.runway-target {
+  position: absolute; top: -4px; bottom: -4px; width: 2px;
+  background: var(--fg);
+  box-shadow: 0 0 12px var(--accent-glow);
+  z-index: 2;
+}
+
+/* Dot-grid background for chart cards (echoes screens/matrix-checkin.html) */
+.dot-grid {
+  background-image:
+    linear-gradient(var(--border) 0.5px, transparent 0.5px),
+    linear-gradient(90deg, var(--border) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  background-position: -0.5px -0.5px;
+}
+
+/* Section spacing */
+.section { padding-block: var(--gap-xl); }
+.section + .section { border-top: var(--hairline); }

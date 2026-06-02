@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Dynamic Energy Tracker",
+    "slug": "dynamic-energy-tracker",
+    "scheme": "det",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0E1117",
+    "primaryColor": "#E08A3A",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dynamicenergy.tracker"
+    },
+    "android": {
+      "package": "com.dynamicenergy.tracker",
+      "backgroundColor": "#0E1117"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "dynamic-energy-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "mobile": "npm start --workspace=mobile",
+    "ios": "npm run ios --workspace=mobile",
+    "web": "npm run dev --workspace=web"
+  }
+}

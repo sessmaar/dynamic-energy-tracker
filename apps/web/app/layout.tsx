@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./tokens.css";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -21,8 +22,10 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Dense Matrix",
   },
+  // apple-touch-icon.svg is the file in /public; iOS also accepts SVG
   icons: {
-    apple: "/apple-touch-icon.png",
+    apple: "/apple-touch-icon.svg",
+    icon: "/apple-touch-icon.svg",
   },
 };
 

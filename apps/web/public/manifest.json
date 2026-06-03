@@ -7,18 +7,34 @@
   "background_color": "#f7f6f2",
   "theme_color": "#01696f",
   "orientation": "portrait",
-  "icons": [
+  "shortcuts": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Log Meal",
+      "short_name": "Log",
+      "description": "Quickly log what you ate",
+      "url": "/log-meal",
+      "icons": [{ "src": "/apple-touch-icon.svg", "sizes": "any" }]
     },
     {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Dashboard",
+      "short_name": "Stats",
+      "description": "View your metabolic stats",
+      "url": "/dashboard",
+      "icons": [{ "src": "/apple-touch-icon.svg", "sizes": "any" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Alert, View } from "react-native";
 import { useRouter } from "expo-router";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Button, Card, Screen, Text, colors, gap, hairline } from "@/design";
 import { useAuth } from "@/context/auth";

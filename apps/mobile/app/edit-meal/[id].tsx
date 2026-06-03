@@ -284,7 +284,7 @@ export default function EditMeal() {
         { text: "Cancel", style: "cancel" },
         {
           text: "Save",
-          onPress: async (name) => {
+          onPress: async (name?: string) => {
             const trimmed = (name ?? "").trim();
             if (!trimmed) return;
             setSaving(true);

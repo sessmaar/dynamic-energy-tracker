@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { isConfigured, supabase } from "@/lib/supabase";
 
@@ -9,11 +9,16 @@ type Phase = "select" | "email_otp" | "otp_code" | "password" | "verifying";
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const oauthError = searchParams.get("error");
+
   const [phase, setPhase] = useState<Phase>("select");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    oauthError === "oauth_callback_failed" ? "Google sign-in failed. Please try again." : null
+  );
   const [busy, setBusy] = useState(false);
 
   if (!isConfigured) {
@@ -36,7 +41,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     setBusy(false);
@@ -99,8 +104,8 @@ export default function SignInPage() {
           <div className="glass-card glass-card-lg space-y-6 shadow-md">
             {phase === "select" && (
               <div className="col" style={{ gap: "var(--gap-md)" }}>
-                <button onClick={loginWithGoogle} style={btnPrimary}>
-                  Continue with Google
+                <button onClick={loginWithGoogle} disabled={busy} style={btnPrimary}>
+                  {busy ? "Redirecting…" : "Continue with Google"}
                 </button>
                 <button onClick={() => { setError(null); setPhase("email_otp"); }} style={btnSecondary}>
                   Verification Code
@@ -223,6 +228,12 @@ export default function SignInPage() {
                 </>
               )}
             </div>
+          )}
+
+          {phase === "select" && error && (
+            <span className="meta text-xs" style={{ color: "var(--error)", textTransform: "none", textAlign: "center", display: "block" }}>
+              {error}
+            </span>
           )}
         </div>
       </main>

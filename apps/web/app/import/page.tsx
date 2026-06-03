@@ -26,11 +26,16 @@ export default function ImportPage() {
     return () => sub.data.subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (session === null) {
+      router.replace("/sign-in");
+    }
+  }, [session, router]);
+
   if (!isConfigured) {
     return <Shell><Empty title="BACKEND NOT CONFIGURED" body="Set NEXT_PUBLIC_SUPABASE_* in apps/web/.env.local." /></Shell>;
   }
-  if (session === undefined) return <Shell><Empty title="…" body="Restoring session." /></Shell>;
-  if (!session) { router.replace("/sign-in"); return null; }
+  if (session === undefined || session === null) return <Shell><Empty title="…" body="Restoring session." /></Shell>;
 
   return <Shell><Importer userId={session.user.id} /></Shell>;
 }

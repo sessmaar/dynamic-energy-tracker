@@ -36,12 +36,15 @@ export default function DashboardPage() {
     return () => sub.data.subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (session === null) {
+      router.replace("/sign-in");
+    }
+  }, [session, router]);
+
   if (!isConfigured) return <ConfigErrorState />;
-  if (session === undefined) return <LoadingState label="Restoring session…" />;
-  if (!session) {
-    router.replace("/sign-in");
-    return null;
-  }
+  if (session === undefined || session === null) return <LoadingState label="Restoring session…" />;
+  
   return <LiveDashboard userId={session.user.id} email={session.user.email ?? ""} />;
 }
 

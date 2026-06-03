@@ -65,3 +65,7 @@ android/local.properties
 .Spotlight-V100
 .Trashes
 .fseventsd
+
+# Security Scanner
+.ship-safe/
+ship-safe-report.html

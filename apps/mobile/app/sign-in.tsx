@@ -6,14 +6,15 @@ import { supabase } from "@/lib/supabase";
 type Phase = "email" | "code" | "verifying";
 
 const Field = ({
-  label, value, onChange, keyboardType, autoCapitalize, autoFocus,
+  label, value, onChange, keyboardType, autoCapitalize, autoFocus, secureTextEntry,
 }: {
   label: string;
   value: string;
   onChange: (s: string) => void;
-  keyboardType?: "email-address" | "number-pad";
+  keyboardType?: "email-address" | "number-pad" | "default";
   autoCapitalize?: "none" | "characters";
   autoFocus?: boolean;
+  secureTextEntry?: boolean;
 }) => (
   <View style={{ gap: gap.sm }}>
     <Text variant="meta">{label}</Text>
@@ -24,6 +25,7 @@ const Field = ({
       autoCorrect={false}
       keyboardType={keyboardType}
       autoFocus={autoFocus}
+      secureTextEntry={secureTextEntry}
       placeholderTextColor={colors.muted}
       style={{
         fontFamily: fonts.mono,
@@ -43,6 +45,8 @@ export default function SignIn() {
   const [phase, setPhase] = useState<Phase>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [usePassword, setUsePassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const sendCode = async () => {
@@ -57,6 +61,27 @@ export default function SignIn() {
     });
     if (error) setError(error.message);
     else setPhase("code");
+  };
+
+  const loginWithPassword = async () => {
+    setError(null);
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError("Invalid uplink address.");
+      return;
+    }
+    if (!password) {
+      setError("Password required.");
+      return;
+    }
+    setPhase("verifying");
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      setError(error.message);
+      setPhase("email");
+    }
   };
 
   const verifyCode = async () => {
@@ -82,20 +107,30 @@ export default function SignIn() {
   return (
     <Screen eyebrow="System · Identity Handshake" title="UPLINK">
       <Text variant="body" color={colors.muted}>
-        Authentication via single-use code. The engine pulls your logs from the
+        Authentication via single-use code or password. The engine pulls your logs from the
         encrypted backend after handshake completes.
       </Text>
 
       <Card>
         <View style={{ gap: gap.lg }}>
           {phase === "email" || phase === "verifying" ? (
-            <Field
-              label="Operator · Email"
-              value={email}
-              onChange={setEmail}
-              keyboardType="email-address"
-              autoFocus
-            />
+            <>
+              <Field
+                label="Operator · Email"
+                value={email}
+                onChange={setEmail}
+                keyboardType="email-address"
+                autoFocus
+              />
+              {usePassword && (
+                <Field
+                  label="Password"
+                  value={password}
+                  onChange={setPassword}
+                  secureTextEntry
+                />
+              )}
+            </>
           ) : (
             <>
               <View style={{ gap: gap.xs }}>
@@ -119,12 +154,34 @@ export default function SignIn() {
       </Card>
 
       {phase === "email" && (
-        <Button onPress={sendCode}>Transmit Code</Button>
+        <>
+          {usePassword ? (
+            <Button onPress={loginWithPassword}>Sign In</Button>
+          ) : (
+            <Button onPress={sendCode}>Transmit Code</Button>
+          )}
+          <Button
+            onPress={() => {
+              setUsePassword(!usePassword);
+              setError(null);
+            }}
+            variant="secondary"
+            style={{ marginTop: 8 }}
+          >
+            {usePassword ? "Use OTP (One-Time Password)" : "Use Email & Password"}
+          </Button>
+        </>
       )}
       {phase === "code" && (
         <>
           <Button onPress={verifyCode}>Verify Handshake</Button>
-          <Button onPress={() => { setPhase("email"); setCode(""); }} variant="secondary">
+          <Button
+            onPress={() => {
+              setPhase("email");
+              setCode("");
+            }}
+            variant="secondary"
+          >
             Re-dispatch
           </Button>
         </>

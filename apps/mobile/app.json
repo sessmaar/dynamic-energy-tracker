@@ -11,7 +11,12 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.dynamicenergy.tracker"
+      "bundleIdentifier": "com.dynamicenergy.tracker",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "fetch"
+        ]
+      }
     },
     "android": {
       "package": "com.dynamicenergy.tracker",

@@ -1,5 +1,6 @@
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { useEngine } from "@/store/engineStore";
 
 /**
@@ -41,6 +42,12 @@ TaskManager.defineTask(CONVERGENCE_TASK_NAME, async () => {
 });
 
 export const registerConvergenceTask = async () => {
+  // Background Fetch is not supported in the Expo Go environment.
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    console.warn("Background Fetch is not supported in Expo Go. Skipping task registration.");
+    return;
+  }
+
   try {
     await BackgroundFetch.registerTaskAsync(CONVERGENCE_TASK_NAME, {
       minimumInterval: 60 * 60 * 12, // 12 hours

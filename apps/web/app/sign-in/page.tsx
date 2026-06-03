@@ -24,10 +24,14 @@ function SignInForm() {
   const loginWithGoogle = async () => {
     setError(null);
     setBusy(true);
+    // Explicitly construct redirect URL and ensure no trailing slashes or weirdness
+    const origin = window.location.origin.replace(/\/$/, "");
+    const redirectTo = `${origin}/dashboard`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
       },
     });
     setBusy(false);

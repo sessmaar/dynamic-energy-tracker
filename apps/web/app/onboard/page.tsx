@@ -3,20 +3,19 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isConfigured, repos, supabase } from "@/lib/supabase";
+import type { ActivityLevel } from "@dense-matrix/data";
 import type { Session } from "@supabase/supabase-js";
 
-type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
 type Sex = "male" | "female";
 type GoalType = "cut" | "maintain" | "gain";
-
 type Step = "profile" | "goal" | "done";
 
 const ACTIVITY_OPTIONS: { value: ActivityLevel; label: string; sub: string }[] = [
-  { value: "sedentary",   label: "Sedentary",     sub: "Desk job, no exercise" },
-  { value: "light",       label: "Light",          sub: "1–2 workouts / week" },
-  { value: "moderate",    label: "Moderate",       sub: "3–4 workouts / week" },
-  { value: "active",      label: "Active",         sub: "5–6 workouts / week" },
-  { value: "very_active", label: "Very Active",    sub: "2× daily / physical job" },
+  { value: "sedentary", label: "Sedentary",   sub: "Desk job, no exercise" },
+  { value: "light",     label: "Light",        sub: "1–2 workouts / week" },
+  { value: "moderate",  label: "Moderate",     sub: "3–4 workouts / week" },
+  { value: "very",      label: "Active",       sub: "5–6 workouts / week" },
+  { value: "extra",     label: "Very Active",  sub: "2× daily / physical job" },
 ];
 
 const GOAL_OPTIONS: { value: GoalType; label: string; sub: string }[] = [
@@ -75,7 +74,7 @@ function OnboardFlow({ userId }: { userId: string }) {
 
   // Profile fields
   const [sex, setSex] = useState<Sex>("male");
-  const [dob, setDob] = useState(""); // YYYY-MM-DD
+  const [dob, setDob] = useState("");
   const [heightCm, setHeightCm] = useState("");
   const [weightKg, setWeightKg] = useState("");
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderate");
@@ -106,7 +105,6 @@ function OnboardFlow({ userId }: { userId: string }) {
         activityLevel,
         timezone,
       });
-      // Also log the initial weight entry so the engine has a data point
       await repos.weight.log({
         userId,
         date: new Date().toISOString().slice(0, 10) as Parameters<typeof repos.weight.log>[0]["date"],
@@ -306,7 +304,6 @@ function OnboardFlow({ userId }: { userId: string }) {
               </p>
             </div>
 
-            {/* Goal type */}
             <div>
               <label className="meta text-xs mb-2 block">Direction</label>
               <div style={{ display: "flex", gap: 8 }}>
@@ -336,7 +333,6 @@ function OnboardFlow({ userId }: { userId: string }) {
               </div>
             </div>
 
-            {/* Rate — hide for maintain */}
             {goalType !== "maintain" && (
               <div>
                 <label className="meta text-xs mb-2 block">Weekly Rate</label>

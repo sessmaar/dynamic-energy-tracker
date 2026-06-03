@@ -127,7 +127,7 @@ export default function ConsolePage() {
           </div>
         </div>
 
-        {/* Telemetry strip */}
+        {/* Metrics strip */}
         <div className="tg tg-4" style={{ marginBottom: "var(--gap-lg)" }}>
           <div className="tg-cell">
             <span className="meta">Current BMR</span>
@@ -208,7 +208,7 @@ export default function ConsolePage() {
         <section id="weight" className="card card-lg" style={{ marginBottom: "var(--gap-lg)" }}>
           <div className="row between" style={{ marginBottom: "var(--gap-md)" }}>
             <div>
-              <span className="meta">Mass Telemetry · Raw vs. EWMA Trend</span>
+              <span className="meta">Weight Log · Raw vs. EWMA Trend</span>
               <h3 className="h3" style={{ marginTop: 4 }}>Body Mass · 84 Days</h3>
             </div>
             <span className="meta">

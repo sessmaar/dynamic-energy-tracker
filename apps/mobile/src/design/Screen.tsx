@@ -9,17 +9,16 @@ export interface ScreenProps {
   title?: string;
   children: ReactNode;
   scroll?: boolean;
+  footer?: ReactNode;
   /**
-   * If provided, the screen renders a pull-to-refresh control whose
-   * tint is the Dense Matrix accent. The promise's lifecycle drives
-   * the spinner state; consumers don't manage their own `refreshing`
-   * flag.
+   * If provided, the screen renders a pull-to-refresh control.
+   * The promise's lifecycle drives the spinner state.
    */
   onRefresh?: () => Promise<unknown> | unknown;
 }
 
-/** Standard Dense Matrix screen shell: dark bg, eyebrow/title header, scroll body. */
-export const Screen = ({ eyebrow, title, children, scroll = true, onRefresh }: ScreenProps) => {
+/** Navigator Light screen shell: light bg, header, scrollable body, optional fixed footer. */
+export const Screen = ({ eyebrow, title, children, scroll = true, footer, onRefresh }: ScreenProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = onRefresh
     ? async () => {
@@ -31,10 +30,10 @@ export const Screen = ({ eyebrow, title, children, scroll = true, onRefresh }: S
   const Body = scroll ? ScrollView : View;
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom"]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
       <Body
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: gap.md, gap: gap.xl, paddingBottom: 120 }}
+        contentContainerStyle={{ padding: gap.md, gap: gap.lg, paddingBottom: footer ? 100 : 32 }}
         {...(scroll && handleRefresh
           ? {
               refreshControl: (
@@ -48,13 +47,14 @@ export const Screen = ({ eyebrow, title, children, scroll = true, onRefresh }: S
           : {})}
       >
         {(eyebrow || title) && (
-          <View style={{ gap: gap.sm }}>
+          <View style={{ gap: 2 }}>
             {eyebrow && <Text variant="eyebrow">{eyebrow}</Text>}
             {title && <Text variant="h2">{title}</Text>}
           </View>
         )}
         {children}
       </Body>
+      {footer}
     </SafeAreaView>
   );
 };

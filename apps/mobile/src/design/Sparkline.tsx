@@ -22,7 +22,7 @@ export const Sparkline = ({
           flex: 1,
           height: `${Math.max(0, Math.min(1, v)) * 100}%`,
           backgroundColor: i >= activeFrom ? colors.accent : colors.fgSoft,
-          borderRadius: 1,
+          borderRadius: 3,
         }}
       />
     ))}

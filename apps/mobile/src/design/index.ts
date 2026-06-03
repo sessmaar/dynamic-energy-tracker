@@ -8,3 +8,5 @@ export { Screen } from "./Screen";
 export { Button } from "./Button";
 export { MacroBar } from "./MacroBar";
 export { TrajectoryCard } from "./TrajectoryCard";
+export { BottomNav } from "./BottomNav";
+

@@ -80,7 +80,7 @@ export default function LogMass() {
   const delta = reference != null && valid ? parsed - reference : null;
 
   return (
-    <Screen eyebrow="Logger · Mass" title="SCALE">
+    <Screen eyebrow="Daily Weight" title="LOG WEIGHT">
       {reference != null && (
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ gap: gap.xs }}>
@@ -91,7 +91,7 @@ export default function LogMass() {
           </View>
           {delta !== null && Math.abs(delta) >= 0.05 && (
             <View style={{ gap: gap.xs, alignItems: "flex-end" }}>
-              <Text variant="meta">Δ vs Last</Text>
+              <Text variant="meta">Change vs Last</Text>
               <Text
                 variant="num"
                 style={{ fontSize: 18, fontWeight: "700" as const }}
@@ -106,7 +106,7 @@ export default function LogMass() {
 
       <Card>
         <View style={{ gap: gap.sm }}>
-          <Text variant="meta">New Reading · KG</Text>
+          <Text variant="meta">Weight Reading · KG</Text>
           <TextInput
             value={value}
             onChangeText={(s) => setValue(s.replace(/[^\d.]/g, ""))}
@@ -136,10 +136,10 @@ export default function LogMass() {
       {showCarbChip && (
         <Card>
           <View style={{ gap: gap.xs }}>
-            <Text variant="meta">Context · Glycogen-Water</Text>
+            <Text variant="meta">Glycogen & Water Weight Context</Text>
             <Text variant="body" color={colors.fg}>
               Yesterday: {Math.round(yesterdayCarbs)} g carbs logged.
-              Likely water mass on the scale today:{" "}
+              Likely water weight on the scale today:{" "}
               <Text variant="num" color={colors.accent}>
                 ~{carbWaterKg.toFixed(1)} kg
               </Text>.
@@ -153,12 +153,11 @@ export default function LogMass() {
       )}
 
       <Button onPress={onCommit} disabled={!valid || committing}>
-        {committing ? "Logging…" : "Commit Reading"}
+        {committing ? "Saving…" : "Save Weight"}
       </Button>
       <Button onPress={() => router.back()} variant="secondary">Cancel</Button>
       <Text variant="body" color={colors.muted} style={{ fontSize: fontSize.small }}>
-        Entries persist to the encrypted backend and feed the EWMA trend
-        smoother. Single-day spikes won&apos;t whip the TDEE estimate.
+        Your daily weigh-ins are securely saved and analyzed using a smoothed trend line. Daily fluctuations (like water weight) won't derail your target.
       </Text>
     </Screen>
   );

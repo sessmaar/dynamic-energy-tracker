@@ -102,18 +102,15 @@ export default function EditGoal() {
   };
 
   return (
-    <Screen eyebrow="Mission · Re-trajectory" title="REVISE GOAL">
+    <Screen eyebrow="Goal Setup" title="EDIT GOAL">
       <Text variant="body" color={colors.muted}>
-        Adjust the weekly target without touching the rest of your profile.
-        The current week's posterior continues from where it is; the new
-        rate just changes how the engine maps TDEE → daily calorie target
-        from now forward.
+        Change your target rate of weight loss or gain. Your daily calorie target will be updated, but your profile details and metabolic history will remain unchanged.
       </Text>
 
       <Card>
         <View style={{ gap: gap.lg }}>
           <View style={{ gap: gap.sm }}>
-            <Text variant="meta">Trajectory</Text>
+            <Text variant="meta">Choose Your Goal</Text>
             <View style={{
               flexDirection: "row", borderWidth: hairline.width, borderColor: colors.border,
               borderRadius: radius.sharp,
@@ -141,7 +138,7 @@ export default function EditGoal() {
 
           {goalType !== "maintain" && (
             <View style={{ gap: gap.sm }}>
-              <Text variant="meta">Weekly Flux · KG/WK</Text>
+              <Text variant="meta">Weekly Target · KG/WK</Text>
               <TextInput
                 value={rate}
                 onChangeText={(s) => setRate(s.replace(/[^\d.]/g, ""))}
@@ -218,7 +215,7 @@ export default function EditGoal() {
       {error && <Text variant="meta" color={colors.accent}>{error}</Text>}
 
       <Button onPress={onCommit} disabled={busy}>
-        {busy ? "Committing…" : "Commit New Goal"}
+        {busy ? "Saving…" : "Save Goal"}
       </Button>
       <Button onPress={() => router.back()} variant="secondary">Cancel</Button>
     </Screen>

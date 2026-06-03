@@ -8,16 +8,21 @@ export interface CardProps {
   padding?: number;
 }
 
-/** Dense Matrix card: surface fill, hairline border, sharp radius. */
+/** Navigator Light glass card: white surface, soft border, rounded corners, subtle blue shadow. */
 export const Card = ({ children, style, padding = gap.lg }: CardProps) => (
   <View
     style={[
       {
         backgroundColor: colors.surface,
         borderWidth: hairline.width,
-        borderColor: hairline.color,
-        borderRadius: radius.sharp,
+        borderColor: colors.border,
+        borderRadius: radius.card,
         padding,
+        shadowColor: colors.accent,
+        shadowOpacity: 0.06,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 2,
       },
       style,
     ]}

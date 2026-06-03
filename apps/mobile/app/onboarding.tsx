@@ -178,15 +178,15 @@ export default function Onboarding() {
   };
 
   return (
-    <Screen eyebrow="System · Initialization" title="CALIBRATE">
+    <Screen eyebrow="Get Started" title="SETUP PROFILE">
       <Text variant="body" color={colors.muted}>
-        The engine starts cold. Provide a baseline; it will tune itself from your logs each Monday.
+        Let's set up your profile. Provide a baseline to start, and the system will automatically adapt your target based on your logs.
       </Text>
 
       <Card>
         <View style={{ gap: gap.lg }}>
           <View style={{ gap: gap.sm }}>
-            <Text variant="meta">Operator · Profile</Text>
+            <Text variant="meta">Personal Details</Text>
             <Segment<Sex>
               options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }]}
               value={sex}
@@ -242,7 +242,7 @@ export default function Onboarding() {
                 <NumberField label="Height" value={heightCm} unit="CM" onChangeText={setHeightCm} />
               </View>
               <View style={{ flex: 1 }}>
-                <NumberField label="Current Mass" value={weightKg} unit="KG" onChangeText={setWeightKg} />
+                <NumberField label="Current Weight" value={weightKg} unit="KG" onChangeText={setWeightKg} />
               </View>
             </View>
           ) : (
@@ -281,7 +281,7 @@ export default function Onboarding() {
                 </View>
               </View>
               <NumberField
-                label="Current Mass"
+                label="Current Weight"
                 value={weightLb}
                 unit="LB"
                 onChangeText={(v) => setWeightKg(lbToKg(Number(v) || 0).toFixed(2))}
@@ -299,9 +299,9 @@ export default function Onboarding() {
       <Card>
         <View style={{ gap: gap.md }}>
           <View style={{ gap: gap.xs }}>
-            <Text variant="meta">Baseline · Activity Level</Text>
+            <Text variant="meta">Typical Daily Activity</Text>
             <Text variant="meta" color={colors.muted}>
-              Your typical week. Sets the starting expenditure estimate; the engine refines it from your logs.
+              This sets your initial calorie target. The app will automatically adjust this number as it learns from your actual data.
             </Text>
           </View>
           <ActivityPicker value={activityLevel} onChange={setActivityLevel} />
@@ -311,7 +311,7 @@ export default function Onboarding() {
       <Card>
         <View style={{ gap: gap.lg }}>
           <View style={{ gap: gap.sm }}>
-            <Text variant="meta">Mission · Trajectory</Text>
+            <Text variant="meta">Choose Your Goal</Text>
             <Segment<"cut" | "maintain" | "gain">
               options={[
                 { value: "cut", label: "Cut" },
@@ -325,10 +325,10 @@ export default function Onboarding() {
 
           {goalType !== "maintain" && (
             units === "metric" ? (
-              <NumberField label="Weekly Flux" value={rate} unit="KG/WK" onChangeText={setRate} />
+              <NumberField label="Weekly Target" value={rate} unit="KG/WK" onChangeText={setRate} />
             ) : (
               <NumberField
-                label="Weekly Flux"
+                label="Weekly Target"
                 value={rateLbPerWk}
                 unit="LB/WK"
                 onChangeText={(v) => setRate(lbToKg(Number(v) || 0).toFixed(3))}
@@ -341,7 +341,7 @@ export default function Onboarding() {
       {error && <Text variant="meta" color={colors.accent}>{error}</Text>}
 
       <Button onPress={onCommit} disabled={committing}>
-        {committing ? "Committing…" : "Commit Baseline"}
+        {committing ? "Saving…" : "Save Profile & Start"}
       </Button>
     </Screen>
   );

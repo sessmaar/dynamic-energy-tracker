@@ -163,10 +163,9 @@ export default function LogComposition() {
   };
 
   return (
-    <Screen eyebrow="Logger · Composition" title="COMPOSITION">
+    <Screen eyebrow="Body Stats" title="BODY COMPOSITION">
       <Text variant="body" color={colors.muted}>
-        Tape measurements feed the U.S. Navy body-fat estimate. A direct reading from a DEXA
-        scan or smart scale overrides it. Lean mass updates the resting-energy model.
+        Log your body measurements to estimate body fat percentage and track lean mass, or enter a direct reading from a smart scale or DEXA scan.
       </Text>
 
       <Card>
@@ -189,7 +188,7 @@ export default function LogComposition() {
             <Field label="Hip · required for female estimate" value={toDisplay(hip)} unit={lenUnit} onChangeText={(v) => setHip(fromDisplay(v))} />
           )}
 
-          <Field label="Direct Body Fat · optional" value={directBf} unit="%" onChangeText={setDirectBf} placeholder="e.g. 18.5" />
+          <Field label="Body Fat Percentage · optional" value={directBf} unit="%" onChangeText={setDirectBf} placeholder="e.g. 18.5" />
         </View>
       </Card>
 
@@ -234,7 +233,7 @@ export default function LogComposition() {
       {error && <Text variant="meta" color={colors.accent}>{error}</Text>}
 
       <Button onPress={onCommit} disabled={committing || !hasAnyInput}>
-        {committing ? "Logging…" : "Commit Assessment"}
+        {committing ? "Saving…" : "Save Measurements"}
       </Button>
       <Button onPress={() => router.back()} variant="secondary">Cancel</Button>
       <Text variant="body" color={colors.muted} style={{ fontSize: fontSize.small }}>

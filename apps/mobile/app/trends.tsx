@@ -5,7 +5,7 @@ import type { EngineStateWeeklyRow } from "@dynamic-energy/data";
 import {
   ewmaTrend, isoDate, latestTrendWeight, localDateInTimezone,
 } from "@dynamic-energy/engine";
-import { Button, Card, MacroBar, Screen, Text, TrajectoryCard, colors, gap, hairline } from "@/design";
+import { BottomNav, Button, Card, MacroBar, Screen, Text, TrajectoryCard, colors, gap, hairline } from "@/design";
 import { useAuth } from "@/context/auth";
 import { repos } from "@/lib/supabase";
 import {
@@ -97,8 +97,9 @@ export default function Trends() {
 
   return (
     <Screen
-      eyebrow="Telemetry · Multi-Week View"
+      eyebrow="Trends"
       title="TRENDS"
+      footer={<BottomNav activeTab="trends" />}
       onRefresh={userId ? async () => {
         const h = await repos.engineState.listHistory(userId, 24);
         setHistory(h.reverse());
@@ -113,7 +114,7 @@ export default function Trends() {
       <Card>
         <View style={{ gap: gap.sm }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text variant="meta">Body Mass · Raw + EWMA Trend</Text>
+            <Text variant="meta">Body Weight · Actual & Trend</Text>
             <Text variant="num" color={trendDelta != null && trendDelta < 0 ? colors.accent : colors.fg}
               style={{ fontSize: 13 }}>
               {trendDelta != null
@@ -151,7 +152,7 @@ export default function Trends() {
       <Card>
         <View style={{ gap: gap.sm }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text variant="meta">TDEE Posterior · Accepted Audits</Text>
+            <Text variant="meta">Metabolic Rate History</Text>
             <Text variant="num" color={colors.accent} style={{ fontSize: 13 }}>
               {history.length} {history.length === 1 ? "POINT" : "POINTS"}
             </Text>
@@ -181,7 +182,7 @@ export default function Trends() {
       <Card>
         <View style={{ gap: gap.sm }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text variant="meta">Daily Intake · 14 Days</Text>
+            <Text variant="meta">Daily Intake · Last 14 Days</Text>
             {target != null && (
               <Text variant="num" color={colors.accent} style={{ fontSize: 13 }}>
                 {Math.round(target)} kcal target
@@ -205,7 +206,7 @@ export default function Trends() {
       {macroTargets.proteinG != null && (
         <Card>
           <View style={{ gap: gap.sm }}>
-            <Text variant="meta">Today · Macro Mix</Text>
+            <Text variant="meta">Today · Macros</Text>
             <MacroBar
               proteinG={macros.proteinG}
               carbsG={macros.carbsG}
@@ -221,7 +222,6 @@ export default function Trends() {
         </Card>
       )}
 
-      <Button onPress={() => router.back()} variant="secondary">← Return</Button>
     </Screen>
   );
 }

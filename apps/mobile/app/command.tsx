@@ -4,38 +4,15 @@ import {
   KCAL_PER_G_PROTEIN, KCAL_PER_G_CARB, KCAL_PER_G_FAT,
 } from "@dynamic-energy/engine";
 import {
-  Card, MacroBar, Runway, Screen, Sparkline, TelemetryCell, TelemetryGrid, Text,
+  BottomNav, Card, MacroBar, Runway, Screen, Sparkline, TelemetryCell, TelemetryGrid, Text,
   TrajectoryCard,
-  colors, fonts, fontSize, gap, hairline, radius,
+  colors, gap, hairline, radius,
 } from "@/design";
 import { useAuth } from "@/context/auth";
 import {
   selectBmr, selectComposition, selectDailyTarget, selectTodayActiveCalories, selectTodayIntake,
   selectTodayMacros, selectTrajectory, selectConvergenceStatus, useEngine,
 } from "@/store/engineStore";
-
-const LogTile = ({
-  label, onPress, active,
-}: { label: string; onPress: () => void; active?: boolean }) => (
-  <Pressable
-    onPress={onPress}
-    style={({ pressed }) => ({
-      flex: 1,
-      aspectRatio: 1,
-      backgroundColor: active ? colors.accent : colors.surface,
-      borderWidth: hairline.width,
-      borderColor: active ? colors.accent : colors.border,
-      borderRadius: radius.card,
-      alignItems: "center",
-      justifyContent: "center",
-      transform: [{ scale: pressed ? 0.96 : 1 }],
-    })}
-  >
-    <Text variant="meta" color={active ? colors.bg : colors.muted}>
-      {label}
-    </Text>
-  </Pressable>
-);
 
 const fmt = (n: number | null | undefined, suffix = "") =>
   n == null ? "—" : `${Math.round(n).toLocaleString()}${suffix}`;
@@ -60,7 +37,6 @@ export default function Command() {
   const fillFraction = target ? Math.min(intakeToday / target, 1.2) : 0;
   const net = target ? intakeToday - target : 0;
 
-  // Energy Integrity Check
   const theoreticalKcal =
     todayMacros.proteinG * KCAL_PER_G_PROTEIN +
     todayMacros.carbsG * KCAL_PER_G_CARB +
@@ -70,11 +46,16 @@ export default function Command() {
 
   return (
     <Screen
-      eyebrow="Mission · Status"
-      title="COMMAND"
       onRefresh={userId ? () => hydrate(userId) : undefined}
+      footer={<BottomNav activeTab="command" />}
     >
-      {/* TRAJECTORY · the headline of the screen */}
+      {/* Header */}
+      <View style={{ gap: 2 }}>
+        <Text variant="eyebrow">Navigator</Text>
+        <Text variant="h2">Dashboard</Text>
+      </View>
+
+      {/* TRAJECTORY */}
       {trajectory && (
         <TrajectoryCard verdict={trajectory.verdict} analysis={trajectory.analysis} />
       )}
@@ -84,7 +65,7 @@ export default function Command() {
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: gap.lg }}>
           <Text variant="meta">Energy Flux Runway</Text>
           <View style={{ alignItems: "flex-end" }}>
-            <Text variant="num" style={{ fontSize: fontSize.small, color: net <= 0 ? colors.accent : colors.fg }}>
+            <Text variant="num" style={{ fontSize: 13, color: net <= 0 ? colors.accent : colors.fg }}>
               {net > 0 ? "+" : ""}{Math.round(net)} <Text variant="meta">NET</Text>
             </Text>
             {showDrift && (
@@ -95,7 +76,7 @@ export default function Command() {
           </View>
         </View>
 
-        <Runway fillFraction={fillFraction} targetFraction={1.0} />
+        <Runway fillFraction={fillFraction} targetFraction={1.0} height={36} />
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: gap.md }}>
           <View style={{ gap: gap.xs }}>
@@ -111,9 +92,9 @@ export default function Command() {
         </View>
       </Card>
 
-      {/* Telemetry */}
+      {/* Metabolic Stats */}
       <View style={{ gap: gap.sm }}>
-        <Text variant="meta">Metabolic Telemetry // Live Stream</Text>
+        <Text variant="meta">Metabolic Stats</Text>
         <TelemetryGrid>
           <TelemetryCell>
             <Text variant="meta">{composition ? "RMR · Katch–McArdle" : "Current BMR"}</Text>
@@ -131,7 +112,7 @@ export default function Command() {
           </TelemetryCell>
           <TelemetryCell span={2}>
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text variant="meta">Engine Estimate · TDEE</Text>
+              <Text variant="meta">Est. Calorie Burn · TDEE</Text>
               <Text variant="num" color={colors.accent} style={{ fontSize: 14 }}>
                 {fmt(tdee)} <Text variant="meta" color={colors.accent}>KCAL/D</Text>
               </Text>
@@ -139,10 +120,10 @@ export default function Command() {
             <View style={{ height: hairline.width, backgroundColor: colors.border, marginVertical: gap.sm }} />
             <Text variant="body" color={colors.muted} style={{ fontSize: 12 }}>
               {convergence?.isConverged
-                ? "Bayesian flux stable. Re-evaluate at Monday check-in."
+                ? "Metabolic rate is calibrated. Re-evaluate at next weekly check-in."
                 : convergence
-                  ? `Tuning engine: ${convergence.daysRemaining} days of data until ${convergence.nextAlpha} alpha.`
-                  : "Awaiting baseline. Complete onboarding to seed the engine."}
+                  ? `Calibrating: ${convergence.daysRemaining} more days of logs needed for a precise update.`
+                  : "Awaiting baseline. Complete initial setup to get started."}
             </Text>
           </TelemetryCell>
           {composition && (
@@ -166,7 +147,7 @@ export default function Command() {
         </TelemetryGrid>
       </View>
 
-      {/* Macro progress — only shown when targets are configured */}
+      {/* Macro Targets */}
       {macroTargets.proteinG != null && (
         <View style={{ gap: gap.sm }}>
           <Text variant="meta">Macro Targets · Today</Text>
@@ -178,40 +159,50 @@ export default function Command() {
         </View>
       )}
 
-      {/* Convergence trigger */}
+      {/* Weekly Calibration Trigger */}
       <Pressable onPress={() => router.push("/convergence")}>
-        <View
-          style={{
-            borderWidth: hairline.width,
-            borderColor: colors.border,
-            padding: gap.md,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            borderRadius: radius.sharp,
-          }}
-        >
-          <Text variant="meta">Run Weekly Convergence →</Text>
-          <Text variant="meta" color={colors.accent}>AUDIT</Text>
+        <View style={{
+          borderWidth: hairline.width,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          padding: gap.md,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderRadius: radius.card,
+          shadowColor: colors.accent,
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 1,
+        }}>
+          <Text variant="meta">Weekly Calibration</Text>
+          <Text variant="meta" color={colors.accent}>START →</Text>
         </View>
       </Pressable>
 
-      {/* Today's intake log */}
+      {/* Today's Food Log */}
       <View style={{ gap: gap.sm }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-          <Text variant="meta">Today · Ingestion Log</Text>
+          <Text variant="meta">Today · Food Log</Text>
           <Text variant="meta" color={colors.muted}>
             {todayMeals.length} {todayMeals.length === 1 ? "entry" : "entries"}
           </Text>
         </View>
         {todayMeals.length === 0 ? (
-          <View style={{ borderWidth: hairline.width, borderColor: colors.border, padding: gap.md }}>
+          <View style={{
+            borderWidth: hairline.width, borderColor: colors.border,
+            backgroundColor: colors.surface, padding: gap.md, borderRadius: radius.card,
+          }}>
             <Text variant="body" color={colors.muted} style={{ fontSize: 12 }}>
-              No fuel logged. Tap Fuel below to search the catalog.
+              No fuel logged. Tap + below to search the catalog.
             </Text>
           </View>
         ) : (
-          <View style={{ borderWidth: hairline.width, borderColor: colors.border }}>
+          <View style={{
+            borderWidth: hairline.width, borderColor: colors.border,
+            backgroundColor: colors.surface, borderRadius: radius.card, overflow: "hidden",
+          }}>
             {todayMeals.map((m, i) => {
               const protein = m.items.reduce((s, it) => s + (it.proteinG ?? 0), 0) || null;
               const carbs   = m.items.reduce((s, it) => s + (it.carbsG ?? 0), 0) || null;
@@ -224,7 +215,7 @@ export default function Command() {
                   style={({ pressed }) => ({
                     padding: gap.md,
                     borderTopWidth: i === 0 ? 0 : hairline.width,
-                    borderTopColor: hairline.color,
+                    borderTopColor: colors.border,
                     backgroundColor: pressed ? colors.accentSoft : "transparent",
                     gap: gap.sm,
                   })}
@@ -251,27 +242,15 @@ export default function Command() {
         )}
         {todayMeals.length > 0 && (
           <Text variant="meta" color={colors.muted} style={{ fontSize: 10 }}>
-            Tap to edit · long-press to purge.
+            Tap to edit · long-press to delete.
           </Text>
         )}
       </View>
 
-      {/* Micro-log shelf */}
-      <View style={{ gap: gap.sm }}>
-        <Text variant="meta">Quick Log</Text>
-        <View style={{ flexDirection: "row", gap: gap.sm }}>
-          <LogTile label="Fuel"     onPress={() => router.push("/log-meal")} active />
-          <LogTile label="Mass"     onPress={() => router.push("/log-mass")} />
-          <LogTile label="Activity" onPress={() => router.push("/log-activity")} />
-          <LogTile label="Body"     onPress={() => router.push("/log-composition")} />
-        </View>
-      </View>
-
       {/* Auxiliary navigation */}
       <View style={{ gap: gap.sm }}>
-        <NavRow label="Recipes · Saved Combinations →" onPress={() => router.push("/recipes")} tag="LIB" />
-        <NavRow label="Trends · Multi-Week View →"     onPress={() => router.push("/trends")}   tag="TRN" />
-        <NavRow label="Settings · Export · Account →"  onPress={() => router.push("/settings")} tag="CFG" />
+        <NavRow label="Recipes & Foods" onPress={() => router.push("/recipes")} tag="→" />
+        <NavRow label="Settings & Data"  onPress={() => router.push("/settings")} tag="→" />
       </View>
     </Screen>
   );
@@ -280,12 +259,19 @@ export default function Command() {
 const NavRow = ({ label, onPress, tag }: { label: string; onPress: () => void; tag: string }) => (
   <Pressable onPress={onPress}>
     <View style={{
-      borderWidth: hairline.width, borderColor: colors.border, padding: gap.md,
+      borderWidth: hairline.width, borderColor: colors.border,
+      backgroundColor: colors.surface,
+      padding: gap.md,
       flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-      borderRadius: radius.sharp,
+      borderRadius: radius.card,
+      shadowColor: colors.accent,
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
     }}>
-      <Text variant="meta">{label}</Text>
-      <Text variant="meta" color={colors.muted}>{tag}</Text>
+      <Text variant="body" style={{ fontSize: 13 }}>{label}</Text>
+      <Text variant="meta" color={colors.accent}>{tag}</Text>
     </View>
   </Pressable>
 );
@@ -296,30 +282,34 @@ const MacroProgressCell = ({
   const pct = target > 0 ? Math.min(current / target, 1.2) : 0;
   const over = current > target;
   return (
-    <View
-      style={{
-        flex: 1,
-        borderWidth: hairline.width,
-        borderColor: colors.border,
-        backgroundColor: colors.surface,
-        padding: gap.md,
-        gap: gap.xs,
-      }}
-    >
+    <View style={{
+      flex: 1,
+      borderWidth: hairline.width,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      padding: gap.md,
+      gap: gap.xs,
+      borderRadius: radius.card,
+      shadowColor: colors.accent,
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    }}>
       <Text variant="meta">{label} · g</Text>
       <Text variant="num" style={{ fontSize: 18, fontWeight: "700" as const }}>
         {Math.round(current)}
       </Text>
       <Text variant="meta" color={over ? colors.accent : colors.muted}>/ {target}</Text>
-      <View style={{ height: 3, backgroundColor: colors.fgSoft, marginTop: gap.xs }}>
+      <View style={{ height: 4, backgroundColor: colors.fgSoft, marginTop: gap.xs, borderRadius: radius.pill }}>
         <View style={{
           width: `${Math.min(pct, 1) * 100}%`, height: "100%",
-          backgroundColor: over ? colors.accent : colors.fg,
+          backgroundColor: over ? colors.accent : colors.accent,
+          borderRadius: radius.pill,
         }} />
       </View>
     </View>
   );
 };
 
-// Silence the unused-import shadow on fonts; kept for parity with text styles elsewhere.
-void fonts;
+// Shared BottomNav imported from design library

@@ -69,10 +69,10 @@ export default function LogActivity() {
   };
 
   return (
-    <Screen eyebrow="Logger · Activity" title="EXPEND">
+    <Screen eyebrow="Activity Log" title="LOG ACTIVITY">
       <Card>
         <View style={{ gap: gap.sm }}>
-          <Text variant="meta">Activity Class</Text>
+          <Text variant="meta">Activity Type</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -128,7 +128,7 @@ export default function LogActivity() {
         <Card>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <View style={{ gap: 2 }}>
-              <Text variant="meta">Estimated Yield</Text>
+              <Text variant="meta">Estimated Calories Burned</Text>
               <Text variant="num" color={colors.accent} style={{ fontSize: 28, fontWeight: "800" as const }}>
                 +{estimatedKcal ?? "—"} <Text variant="meta" color={colors.accent}>KCAL</Text>
               </Text>
@@ -149,11 +149,11 @@ export default function LogActivity() {
       {error && <Text variant="meta" color={colors.accent}>{error}</Text>}
 
       <Button onPress={onCommit} disabled={!selected || !validMinutes || committing}>
-        {committing ? "Logging…" : "Commit Activity"}
+        {committing ? "Saving…" : "Save Activity"}
       </Button>
       <Button onPress={() => router.back()} variant="secondary">Cancel</Button>
       <Text variant="body" color={colors.muted} style={{ fontSize: fontSize.small }}>
-        Active calories are informational — your weekly TDEE remains the source of truth.
+        Active calories are informational — your weekly calorie target remains the source of truth.
       </Text>
     </Screen>
   );

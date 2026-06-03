@@ -44,10 +44,10 @@ const variantStyle: Record<Variant, TextStyle> = {
     letterSpacing: letterSpacing.tight,
   },
   eyebrow: {
-    fontFamily: fonts.mono,
+    fontFamily: fonts.body,
     fontSize: fontSize.micro,
     color: colors.accent,
-    textTransform: "uppercase",
+    fontWeight: "600",
     letterSpacing: letterSpacing.wide,
   },
   num: {

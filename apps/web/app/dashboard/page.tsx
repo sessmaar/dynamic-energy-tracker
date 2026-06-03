@@ -95,7 +95,7 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
     })();
   }, [userId]);
 
-  if (state.kind === "loading") return <LoadingState label="Pulling telemetry…" />;
+  if (state.kind === "loading") return <LoadingState label="Syncing your data…" />;
   if (state.kind === "error") return <ErrorState message={state.message} />;
   if (state.kind === "empty") return <EmptyState email={email} onSignOut={() => signOutAndGo(router)} />;
 
@@ -181,7 +181,7 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
       <main className="container section">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "var(--gap-lg)" }}>
           <div>
-            <span className="eyebrow">System · Live Telemetry</span>
+            <span className="eyebrow">System · Active Session</span>
             <h1 className="h1" style={{ marginTop: 16 }}>DASHBOARD</h1>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -253,7 +253,7 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
         <section className="card card-lg">
           <div className="row between" style={{ marginBottom: "var(--gap-md)" }}>
             <div>
-              <span className="meta">Mass Telemetry · Raw vs. EWMA Trend</span>
+              <span className="meta">Weight Log · Raw vs. EWMA Trend</span>
               <h3 className="h3" style={{ marginTop: 4 }}>Body Mass</h3>
             </div>
             <span className="meta">Δ Trend · <span className="num" style={{ color: "var(--accent)" }}>
@@ -348,7 +348,7 @@ const LoadingState = ({ label }: { label: string }) => (
 const ErrorState = ({ message }: { message: string }) => (
   <main className="container section">
     <span className="eyebrow">System · Fault</span>
-    <h1 className="h2" style={{ marginTop: 16 }}>TELEMETRY FAULT</h1>
+    <h1 className="h2" style={{ marginTop: 16 }}>SYNC FAILURE</h1>
     <p style={{ color: "var(--muted)", marginTop: 24 }}>{message}</p>
   </main>
 );

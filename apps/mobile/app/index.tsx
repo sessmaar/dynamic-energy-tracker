@@ -31,9 +31,9 @@ export default function Index() {
 
   if (error) {
     return (
-      <Screen eyebrow="System · Fault" title="TELEMETRY FAULT">
+      <Screen eyebrow="System · Fault" title="SYNC FAILURE">
         <Text variant="body" color={colors.muted}>
-          The backend rejected the initial telemetry pull. The most likely
+          The backend rejected the initial data synchronization. The most likely
           causes are: Supabase project unreachable, RLS misconfigured, or
           migrations not applied.
         </Text>
@@ -45,7 +45,7 @@ export default function Index() {
           <Text variant="meta">Engine Reported</Text>
           <Text variant="num" style={{ marginTop: 4, fontSize: 13 }}>{error}</Text>
         </View>
-        <Button onPress={() => userId && hydrate(userId)}>Retry Handshake</Button>
+        <Button onPress={() => userId && hydrate(userId)}>Retry Sync</Button>
         <Button
           onPress={async () => { await signOut(); }}
           variant="secondary"
@@ -57,7 +57,7 @@ export default function Index() {
   }
 
   if (loading || storedUserId !== userId) {
-    return <Splash label="Pulling telemetry…" />;
+    return <Splash label="Syncing your data…" />;
   }
   return <Redirect href={profile ? "/command" : "/onboarding"} />;
 }

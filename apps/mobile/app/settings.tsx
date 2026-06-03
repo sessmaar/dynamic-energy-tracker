@@ -3,7 +3,7 @@ import { Alert, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-import { Button, Card, Screen, Text, colors, gap, hairline } from "@/design";
+import { BottomNav, Button, Card, Screen, Text, colors, gap, hairline } from "@/design";
 import { useAuth } from "@/context/auth";
 import { haptic } from "@/lib/haptics";
 import { useEngine } from "@/store/engineStore";
@@ -86,30 +86,34 @@ export default function Settings() {
   };
 
   return (
-    <Screen eyebrow="System · Configuration" title="SETTINGS">
+    <Screen
+      eyebrow="Settings"
+      title="SETTINGS"
+      footer={<BottomNav activeTab="settings" />}
+    >
       <Card>
         <View style={{ gap: gap.md }}>
-          <Text variant="meta">Operator</Text>
+          <Text variant="meta">Profile Info</Text>
           <Field label="Email"          value={session?.user.email ?? "—"} />
           <Field label="Sex"            value={profile?.sex.toUpperCase() ?? "—"} />
           <Field label="Date of Birth"  value={dob ?? "—"} />
           <Field label="Timezone"       value={tz} />
-          <Field label="Weekly Flux"    value={goal === 0 ? "Maintain" : `${goal > 0 ? "+" : ""}${goal} kg/wk`} />
+          <Field label="Weekly Target"    value={goal === 0 ? "Maintain" : `${goal > 0 ? "+" : ""}${goal} kg/wk`} />
         </View>
       </Card>
 
       <Card>
         <View style={{ gap: gap.md }}>
-          <Text variant="meta">Mission</Text>
+          <Text variant="meta">Goals</Text>
           <Button onPress={() => router.push("/edit-goal")} variant="secondary">
-            Revise Weekly Goal
+            Change Weekly Goal
           </Button>
         </View>
       </Card>
 
       <Card>
         <View style={{ gap: gap.md }}>
-          <Text variant="meta">Data Sovereignty</Text>
+          <Text variant="meta">Data Management</Text>
           <Text variant="body" color={colors.muted} style={{ fontSize: 13 }}>
             Your raw logs belong to you. Export a complete JSON snapshot any
             time; purge erases everything on the backend.
@@ -122,7 +126,7 @@ export default function Settings() {
 
       <Card>
         <View style={{ gap: gap.md }}>
-          <Text variant="meta">Session</Text>
+          <Text variant="meta">Account Session</Text>
           <Button onPress={onSignOut} disabled={busy !== null} variant="secondary">
             {busy === "signout" ? "Signing out…" : "Sign Out"}
           </Button>
@@ -131,18 +135,17 @@ export default function Settings() {
 
       <Card>
         <View style={{ gap: gap.md }}>
-          <Text variant="meta" color={colors.accent}>Danger · Irreversible</Text>
+          <Text variant="meta" color={colors.accent}>Delete Account</Text>
           <Text variant="body" color={colors.muted} style={{ fontSize: 13 }}>
             Permanent account deletion. Cascades through every owned table.
           </Text>
           <Button onPress={onDelete} disabled={busy !== null}>
-            {busy === "delete" ? "Purging…" : "Purge Account"}
+            {busy === "delete" ? "Deleting…" : "Delete Account"}
           </Button>
         </View>
       </Card>
 
       {error && <Text variant="meta" color={colors.accent}>{error}</Text>}
-      <Button onPress={() => router.back()} variant="secondary">← Return</Button>
     </Screen>
   );
 }

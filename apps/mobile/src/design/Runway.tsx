@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { colors } from "./tokens";
+import { colors, radius } from "./tokens";
 
 export interface RunwayProps {
   /** 0..1 — how much of today's intake has been logged. */
@@ -10,20 +10,26 @@ export interface RunwayProps {
 }
 
 /**
- * Horizontal Energy Flux Runway. Soft fg-toned track, accent fill,
- * vertical target line glowing in accent. Mirrors `.runway-track` from
- * `screens/matrix-home.html`.
+ * Horizontal Energy Flux Runway. Light surfaceContainer track, accent fill,
+ * vertical target line in accent. Navigator Light edition.
  */
 export const Runway = ({ fillFraction, targetFraction = 1.0, height = 40 }: RunwayProps) => {
   const clampedFill = Math.max(0, Math.min(1, fillFraction));
   const clampedTarget = Math.max(0, Math.min(1, targetFraction));
   return (
-    <View style={{ height, backgroundColor: colors.fgSoft, position: "relative" }}>
+    <View style={{
+      height,
+      backgroundColor: colors.fgSoft,
+      borderRadius: radius.pill,
+      position: "relative",
+      overflow: "hidden",
+    }}>
       <View
         style={{
           width: `${clampedFill * 100}%`,
           height: "100%",
           backgroundColor: colors.accent,
+          borderRadius: radius.pill,
         }}
       />
       <View
@@ -35,8 +41,8 @@ export const Runway = ({ fillFraction, targetFraction = 1.0, height = 40 }: Runw
           width: 2,
           backgroundColor: colors.fg,
           shadowColor: colors.accent,
-          shadowOpacity: 0.8,
-          shadowRadius: 6,
+          shadowOpacity: 0.5,
+          shadowRadius: 4,
           shadowOffset: { width: 0, height: 0 },
         }}
       />

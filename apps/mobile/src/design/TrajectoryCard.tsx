@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import type { TrajectoryVerdict, TrendAnalysis } from "@dynamic-energy/engine";
-import { colors, gap, hairline } from "./tokens";
+import { colors, gap, hairline, radius } from "./tokens";
 import { Text } from "./Text";
 
 /**
@@ -8,10 +8,6 @@ import { Text } from "./Text";
  * user opens the app to see. Status, current rate ± CI, the noise
  * floor of their own scale, and (when goal + expected rate are
  * available) a one-line "actual vs expected" comparison.
- *
- * Color rules: the accent fires only when the verdict matches the
- * user's goal direction. Mismatches stay neutral so the screen isn't
- * yelling at the user for honest noise.
  */
 export interface TrajectoryCardProps {
   verdict: TrajectoryVerdict;
@@ -37,8 +33,14 @@ export const TrajectoryCard = ({ verdict, analysis }: TrajectoryCardProps) => {
       borderWidth: hairline.width,
       borderColor: colors.border,
       backgroundColor: colors.surface,
+      borderRadius: radius.card,
       padding: gap.lg,
       gap: gap.md,
+      shadowColor: colors.accent,
+      shadowOpacity: 0.06,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 2,
     }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
         <Text variant="meta">Trajectory · {analysis.windowDays}-Day Regression</Text>
@@ -99,7 +101,7 @@ export const TrajectoryCard = ({ verdict, analysis }: TrajectoryCardProps) => {
       {analysis.transientWaterKg > 0.3 && (
         <View style={{
           marginTop: gap.xs, padding: gap.sm, backgroundColor: colors.accentSoft,
-          borderRadius: 2, borderWidth: hairline.width, borderColor: colors.accent,
+          borderRadius: radius.sharp, borderWidth: hairline.width, borderColor: colors.accent,
         }}>
           <Text variant="meta" color={colors.accent} style={{ fontSize: 10 }}>
             WATER FLUX · ~{analysis.transientWaterKg.toFixed(2)} KG transient mass detected from recent carbs

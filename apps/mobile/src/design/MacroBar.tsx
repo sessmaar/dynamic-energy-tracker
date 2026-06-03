@@ -1,16 +1,10 @@
 import { View } from "react-native";
-import { colors, hairline } from "./tokens";
+import { colors, radius } from "./tokens";
 import { Text } from "./Text";
 
 /**
  * Single-row stacked bar showing macro split as a fraction of total
- * energy. Protein and carbs = 4 kcal/g, fat = 9 kcal/g — same arithmetic
- * Atwater used. Unknown macros (nulls) become an "unaccounted" sliver in
- * fg-soft so the bar still fills the row, rather than collapsing.
- *
- * Three slim labels under the bar match the slice colors. Intentionally
- * not a pie — Dense Matrix avoids pies on principle, and a flat bar
- * carries the same info in less space.
+ * energy. Navigator Light edition — rounded track, blue protein slice.
  */
 export interface MacroBarProps {
   proteinG: number | null;
@@ -22,8 +16,8 @@ export interface MacroBarProps {
 }
 
 const P_COLOR = colors.accent;
-const C_COLOR = "#9aa0a8"; // muted slate, distinguishable from fg
-const F_COLOR = "#5b6068"; // even darker slate
+const C_COLOR = colors.secondaryContainer;
+const F_COLOR = colors.secondary;
 
 export const MacroBar = ({
   proteinG, carbsG, fatG, totalKcal, height = 6, hideLabels,
@@ -33,8 +27,6 @@ export const MacroBar = ({
   const fKcal = (fatG     ?? 0) * 9;
   const knownKcal = pKcal + cKcal + fKcal;
 
-  // Use total kcal as the denominator when it exceeds known macros
-  // (common — many quick-add entries have no macros at all).
   const denom = Math.max(totalKcal, knownKcal, 1);
   const pPct = (pKcal / denom) * 100;
   const cPct = (cKcal / denom) * 100;
@@ -48,8 +40,7 @@ export const MacroBar = ({
           flexDirection: "row",
           height,
           backgroundColor: colors.fgSoft,
-          borderWidth: hairline.width,
-          borderColor: hairline.color,
+          borderRadius: radius.pill,
           overflow: "hidden",
         }}
       >
@@ -74,7 +65,7 @@ const formatG = (n: number | null): string =>
 
 const Legend = ({ dot, label }: { dot: string; label: string }) => (
   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-    <View style={{ width: 6, height: 6, backgroundColor: dot, borderRadius: 1 }} />
+    <View style={{ width: 6, height: 6, backgroundColor: dot, borderRadius: 3 }} />
     <Text variant="meta">{label}</Text>
   </View>
 );

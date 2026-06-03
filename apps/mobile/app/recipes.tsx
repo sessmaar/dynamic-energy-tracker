@@ -57,14 +57,12 @@ export default function RecipesIndex() {
 
   return (
     <Screen
-      eyebrow="Library · Saved Combinations"
+      eyebrow="Recipes"
       title="RECIPES"
       onRefresh={userId ? () => hydrate(userId) : undefined}
     >
       <Text variant="body" color={colors.muted}>
-        A recipe is a saved combination of foods you log together. Add
-        one in two ways: edit a meal and tap &quot;Save as Recipe&quot;,
-        or compose freshly from the search flow (TBD).
+        Save your favorite combinations of food to log them in a single tap. To create a recipe, open any logged meal and tap 'Save as Recipe'.
       </Text>
 
       {recipes.length === 0 ? (

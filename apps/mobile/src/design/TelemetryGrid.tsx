@@ -1,17 +1,14 @@
 import { type ReactNode } from "react";
 import { View } from "react-native";
-import { colors, gap, hairline } from "./tokens";
+import { colors, gap, hairline, radius } from "./tokens";
 
 export interface TelemetryGridProps {
   children: ReactNode;
 }
 
 /**
- * 2-column grid where cell separation IS the border — same trick as
- * `.telemetry-grid` in the prototypes (gap: 1px on a border-colored
- * background). RN's `gap` works on `flex` containers but not nested
- * grids, so we render cells in a wrapping row with a hairline border
- * around the whole thing.
+ * 2-column grid. Navigator Light edition: white card surface, soft
+ * border separator, rounded corners on the outer container.
  */
 export const TelemetryGrid = ({ children }: TelemetryGridProps) => (
   <View
@@ -21,7 +18,9 @@ export const TelemetryGrid = ({ children }: TelemetryGridProps) => (
       backgroundColor: colors.border,
       gap: hairline.width,
       borderWidth: hairline.width,
-      borderColor: hairline.color,
+      borderColor: colors.border,
+      borderRadius: radius.card,
+      overflow: "hidden",
     }}
   >
     {children}
@@ -35,7 +34,7 @@ export const TelemetryCell = ({
     style={{
       flexBasis: span === 2 ? "100%" : `49.5%`,
       flexGrow: 1,
-      backgroundColor: colors.bg,
+      backgroundColor: colors.surface,
       padding: gap.md,
       gap: gap.sm,
     }}

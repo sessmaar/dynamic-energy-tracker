@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
 import type { EngineStateWeeklyRow } from "@dynamic-energy/data";
-import { Button, Card, Screen, Text, colors, gap, hairline } from "@/design";
+import { BottomNav, Button, Card, Screen, Text, colors, gap, hairline, radius } from "@/design";
 import { useAuth } from "@/context/auth";
 import { haptic } from "@/lib/haptics";
 import { repos } from "@/lib/supabase";
@@ -86,21 +86,24 @@ export default function Convergence() {
   const delta = priorSnapshot !== null && tdee !== null ? tdee - priorSnapshot : null;
 
   return (
-    <Screen eyebrow="System · Bayesian Audit" title="CONVERGENCE">
+    <Screen
+      eyebrow="Weekly Calibration"
+      title="CALIBRATION"
+      footer={<BottomNav activeTab="convergence" />}
+    >
       <Text variant="body" color={colors.muted}>
-        The engine re-weights its TDEE estimate against the previous 7 days. Confidence rises with
-        data completeness; insufficient logs leave the prior untouched.
+        Every week, the system analyzes your logged food and weight data to calibrate your daily calorie budget. The more days you log, the more precise it gets.
       </Text>
 
       <Card>
         <View style={{ gap: gap.lg }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <View>
-              <Text variant="meta">Window · Open</Text>
+              <Text variant="meta">Start Date</Text>
               <Text variant="num" style={{ fontSize: 18, fontWeight: "700" as const }}>{start}</Text>
             </View>
             <View style={{ alignItems: "flex-end" }}>
-              <Text variant="meta">Window · Close</Text>
+              <Text variant="meta">End Date</Text>
               <Text variant="num" style={{ fontSize: 18, fontWeight: "700" as const }}>{end}</Text>
             </View>
           </View>
@@ -117,7 +120,7 @@ export default function Convergence() {
                   </Text>
                 </View>
                 <View style={{ alignItems: "flex-end" }}>
-                  <Text variant="meta">Δ Trend Mass</Text>
+                  <Text variant="meta">Weight Change</Text>
                   <Text
                     variant="num"
                     style={{ fontSize: 22, fontWeight: "700" as const }}
@@ -131,13 +134,13 @@ export default function Convergence() {
 
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                 <View>
-                  <Text variant="meta">Data Completeness</Text>
+                  <Text variant="meta">Data Logged</Text>
                   <Text variant="num" color={colors.accent} style={{ fontSize: 18 }}>
-                    {Math.round(lastCheckin.completeness * 100)}%
+                    {Math.round(lastCheckin.completeness * 100)}% of days
                   </Text>
                 </View>
                 <View style={{ alignItems: "flex-end" }}>
-                  <Text variant="meta">Inferred TDEE</Text>
+                  <Text variant="meta">Inferred Burn (TDEE)</Text>
                   <Text variant="num" style={{ fontSize: 18 }}>
                     {fmt(lastCheckin.tdeeWeek)} <Text variant="meta">KCAL/D</Text>
                   </Text>
@@ -146,7 +149,7 @@ export default function Convergence() {
             </>
           ) : (
             <Text variant="body" color={colors.muted}>
-              No audit yet for this window. Run convergence to compute.
+              No calibration run yet for this week. Run calibration to calculate.
             </Text>
           )}
         </View>
@@ -155,7 +158,7 @@ export default function Convergence() {
       {delta !== null && (
         <Card>
           <View style={{ gap: gap.sm }}>
-            <Text variant="meta">Posterior Shift</Text>
+            <Text variant="meta">Daily Burn Adjustment</Text>
             <View style={{ flexDirection: "row", alignItems: "baseline", gap: gap.md }}>
               <Text variant="num" color={colors.muted} style={{ fontSize: 20 }}>
                 {fmt(priorSnapshot)}
@@ -165,7 +168,7 @@ export default function Convergence() {
                 {fmt(tdee)}
               </Text>
               <Text variant="meta">
-                ({delta > 0 ? "+" : ""}{Math.round(delta)})
+                ({delta > 0 ? "+" : ""}{Math.round(delta)} KCAL/D)
               </Text>
             </View>
           </View>
@@ -174,21 +177,21 @@ export default function Convergence() {
 
       {error && <Text variant="meta" color={colors.accent}>{error}</Text>}
 
-      <Button onPress={onRun}>Run Convergence</Button>
+      <Button onPress={onRun}>Run Weekly Calibration</Button>
       {lastCheckin && lastCheckin.daysWithBoth >= 3 && !accepted && (
         <Button onPress={onAccept} disabled={accepting} variant="secondary">
-          {accepting ? "Persisting…" : "Accept · Commit Posterior to Audit Log"}
+          {accepting ? "Saving…" : "Accept New Calibration"}
         </Button>
       )}
       {accepted && (
         <Text variant="meta" color={colors.accent}>
-          Posterior committed. Engine state persisted.
+          Calibration saved. Calorie budget updated.
         </Text>
       )}
       {history.length > 0 && (
         <View style={{ gap: gap.sm }}>
-          <Text variant="meta">Audit Log · {history.length} Accepted Posteriors</Text>
-          <View style={{ borderWidth: hairline.width, borderColor: colors.border }}>
+          <Text variant="meta">Calibration Log · {history.length} Adjustments</Text>
+          <View style={{ borderWidth: hairline.width, borderColor: colors.border, borderRadius: radius.sharp, overflow: "hidden" }}>
             {history.map((h, i) => (
               <View
                 key={h.id}
@@ -196,6 +199,7 @@ export default function Convergence() {
                   padding: gap.md, gap: 2,
                   borderTopWidth: i === 0 ? 0 : hairline.width,
                   borderTopColor: hairline.color,
+                  backgroundColor: colors.surface,
                 }}
               >
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
@@ -204,14 +208,12 @@ export default function Convergence() {
                     {Math.round(h.tdee_posterior)} <Text variant="meta" color={colors.accent}>KCAL/D</Text>
                   </Text>
                 </View>
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 2 }}>
                   <Text variant="meta">
-                    Δ {h.delta_weight_kg > 0 ? "+" : ""}{h.delta_weight_kg.toFixed(2)} kg ·
-                    α {h.alpha.toFixed(2)} ·
-                    {Math.round(h.data_completeness_score * 100)}% data
+                    Weight: {h.delta_weight_kg > 0 ? "+" : ""}{h.delta_weight_kg.toFixed(2)} kg · {Math.round(h.data_completeness_score * 100)}% logged
                   </Text>
                   <Text variant="meta">
-                    from {Math.round(h.tdee_prior)} ({h.tdee_posterior > h.tdee_prior ? "+" : ""}
+                    prior: {Math.round(h.tdee_prior)} ({h.tdee_posterior >= h.tdee_prior ? "+" : ""}
                     {Math.round(h.tdee_posterior - h.tdee_prior)})
                   </Text>
                 </View>
@@ -221,7 +223,6 @@ export default function Convergence() {
         </View>
       )}
 
-      <Button onPress={() => router.back()} variant="secondary">Return to Command</Button>
     </Screen>
   );
 }

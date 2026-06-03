@@ -5,9 +5,9 @@
     "scheme": "det",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0E1117",
-    "primaryColor": "#E08A3A",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F8FAFC",
+    "primaryColor": "#0058BC",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
@@ -20,12 +20,13 @@
     },
     "android": {
       "package": "com.dynamicenergy.tracker",
-      "backgroundColor": "#0E1117"
+      "backgroundColor": "#F8FAFC"
     },
     "plugins": [
       "expo-router",
       "@react-native-community/datetimepicker",
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

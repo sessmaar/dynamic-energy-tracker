@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isConfigured, repos, supabase } from "@/lib/supabase";
-import type { ActivityLevel } from "@dense-matrix/data";
+import type { ActivityLevel } from "@dynamic-energy/data";
 import type { Session } from "@supabase/supabase-js";
 
 type Sex = "male" | "female";
@@ -72,7 +72,6 @@ function OnboardFlow({ userId }: { userId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Profile fields
   const [sex, setSex] = useState<Sex>("male");
   const [dob, setDob] = useState("");
   const [heightCm, setHeightCm] = useState("");
@@ -82,7 +81,6 @@ function OnboardFlow({ userId }: { userId: string }) {
     () => Intl.DateTimeFormat().resolvedOptions().timeZone
   );
 
-  // Goal fields
   const [goalType, setGoalType] = useState<GoalType>("cut");
   const [rateKgPerWeek, setRateKgPerWeek] = useState(0.5);
 
@@ -144,7 +142,6 @@ function OnboardFlow({ userId }: { userId: string }) {
       className="min-h-screen bg-bg text-fg flex flex-col items-center justify-center p-6"
       style={{ fontFamily: "var(--font-body)" }}
     >
-      {/* Progress indicator */}
       <div className="flex items-center gap-2 mb-10">
         {(["profile", "goal", "done"] as Step[]).map((s, i) => (
           <div key={s} className="flex items-center gap-2">
@@ -183,7 +180,6 @@ function OnboardFlow({ userId }: { userId: string }) {
               </p>
             </div>
 
-            {/* Sex */}
             <div>
               <label className="meta text-xs mb-2 block">Biological Sex</label>
               <div style={{ display: "flex", gap: 8 }}>
@@ -210,7 +206,6 @@ function OnboardFlow({ userId }: { userId: string }) {
               </div>
             </div>
 
-            {/* Date of birth */}
             <div>
               <label className="meta text-xs mb-2 block">Date of Birth</label>
               <input
@@ -222,7 +217,6 @@ function OnboardFlow({ userId }: { userId: string }) {
               />
             </div>
 
-            {/* Height */}
             <div>
               <label className="meta text-xs mb-2 block">Height (cm)</label>
               <input
@@ -236,7 +230,6 @@ function OnboardFlow({ userId }: { userId: string }) {
               />
             </div>
 
-            {/* Current weight */}
             <div>
               <label className="meta text-xs mb-2 block">Current Weight (kg)</label>
               <input
@@ -251,7 +244,6 @@ function OnboardFlow({ userId }: { userId: string }) {
               />
             </div>
 
-            {/* Activity level */}
             <div>
               <label className="meta text-xs mb-2 block">Activity Level</label>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -280,15 +272,9 @@ function OnboardFlow({ userId }: { userId: string }) {
               </div>
             </div>
 
-            {error && (
-              <p style={{ color: "var(--error)", fontSize: 13 }}>{error}</p>
-            )}
+            {error && <p style={{ color: "var(--error)", fontSize: 13 }}>{error}</p>}
 
-            <button
-              onClick={saveProfile}
-              disabled={busy || !profileValid}
-              style={btnPrimary}
-            >
+            <button onClick={saveProfile} disabled={busy || !profileValid} style={btnPrimary}>
               {busy ? "Saving…" : "Continue →"}
             </button>
           </div>
@@ -360,9 +346,7 @@ function OnboardFlow({ userId }: { userId: string }) {
               </div>
             )}
 
-            {error && (
-              <p style={{ color: "var(--error)", fontSize: 13 }}>{error}</p>
-            )}
+            {error && <p style={{ color: "var(--error)", fontSize: 13 }}>{error}</p>}
 
             <div style={{ display: "flex", gap: 8 }}>
               <button
@@ -371,11 +355,7 @@ function OnboardFlow({ userId }: { userId: string }) {
               >
                 ← Back
               </button>
-              <button
-                onClick={saveGoal}
-                disabled={busy}
-                style={{ ...btnPrimary, flex: 2 }}
-              >
+              <button onClick={saveGoal} disabled={busy} style={{ ...btnPrimary, flex: 2 }}>
                 {busy ? "Saving…" : "Launch Dashboard →"}
               </button>
             </div>

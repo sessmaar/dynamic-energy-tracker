@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { isConfigured, supabase } from "@/lib/supabase";
 
 type Phase = "select" | "email_otp" | "otp_code" | "password" | "verifying";
@@ -79,159 +80,190 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="container" style={{ maxWidth: 560, paddingBlock: "var(--gap-xl)" }}>
-      <span className="eyebrow">Welcome Back</span>
-      <h1 className="h2" style={{ marginTop: 16, marginBottom: 24 }}>SIGN IN</h1>
+    <div className="min-h-screen bg-bg text-fg font-body-md antialiased hero-gradient flex flex-col justify-between">
+      {/* Mini Nav */}
+      <nav className="p-6">
+        <Link href="/" className="font-display font-bold text-lg tracking-tight text-fg">
+          Dense Matrix
+        </Link>
+      </nav>
 
-      <div className="card card-lg col" style={{ gap: "var(--gap-lg)" }}>
-        {phase === "select" && (
-          <div className="col" style={{ gap: "var(--gap-md)" }}>
-            <button onClick={loginWithGoogle} style={btnPrimary}>
-              Continue with Google
-            </button>
-            <button onClick={() => { setError(null); setPhase("email_otp"); }} style={btnSecondary}>
-              Use Verification Code
-            </button>
-            <button onClick={() => { setError(null); setPhase("password"); }} style={btnSecondary}>
-              Use Email & Password
-            </button>
+      {/* Main Form Area */}
+      <main className="container flex-1 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-[420px] space-y-6">
+          <div className="text-center space-y-2">
+            <span className="eyebrow text-xs">Identity Verification</span>
+            <h1 className="font-display text-3xl font-bold tracking-tight">Welcome Back</h1>
           </div>
-        )}
 
-        {(phase === "email_otp" || phase === "password" || phase === "otp_code") && (
-          <div className="col" style={{ gap: "var(--gap-lg)" }}>
-            {phase === "email_otp" && (
-              <label className="col" style={{ gap: "var(--gap-sm)" }}>
-                <span className="meta">Email Address</span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoFocus
-                  style={inputStyle}
-                />
-              </label>
+          <div className="glass-card glass-card-lg space-y-6 shadow-md">
+            {phase === "select" && (
+              <div className="col" style={{ gap: "var(--gap-md)" }}>
+                <button onClick={loginWithGoogle} style={btnPrimary}>
+                  Continue with Google
+                </button>
+                <button onClick={() => { setError(null); setPhase("email_otp"); }} style={btnSecondary}>
+                  Verification Code
+                </button>
+                <button onClick={() => { setError(null); setPhase("password"); }} style={btnSecondary}>
+                  Email & Password
+                </button>
+              </div>
             )}
 
-            {phase === "password" && (
-              <>
-                <label className="col" style={{ gap: "var(--gap-sm)" }}>
-                  <span className="meta">Email Address</span>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoFocus
-                    style={inputStyle}
-                  />
-                </label>
-                <label className="col" style={{ gap: "var(--gap-sm)" }}>
-                  <span className="meta">Password</span>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={inputStyle}
-                  />
-                </label>
-              </>
-            )}
+            {(phase === "email_otp" || phase === "password" || phase === "otp_code") && (
+              <div className="col" style={{ gap: "var(--gap-lg)" }}>
+                {phase === "email_otp" && (
+                  <div className="col" style={{ gap: "var(--gap-sm)" }}>
+                    <span className="meta text-xs">Email Address</span>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoFocus
+                      className="input-minimal"
+                      placeholder="name@domain.com"
+                    />
+                  </div>
+                )}
 
-            {phase === "otp_code" && (
-              <>
-                <div className="col" style={{ gap: 4 }}>
-                  <span className="meta">Verification Email Sent</span>
-                  <span className="num" style={{ fontSize: 16 }}>{email}</span>
-                </div>
-                <label className="col" style={{ gap: "var(--gap-sm)" }}>
-                  <span className="meta">6-Digit Code</span>
-                  <input
-                    inputMode="numeric"
-                    pattern="\d{6}"
-                    maxLength={6}
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    autoFocus
-                    style={{
-                      ...inputStyle,
-                      fontSize: 32,
-                      fontWeight: 800,
-                      letterSpacing: "0.3em",
-                    }}
-                  />
-                </label>
-              </>
-            )}
+                {phase === "password" && (
+                  <>
+                    <div className="col" style={{ gap: "var(--gap-sm)" }}>
+                      <span className="meta text-xs">Email Address</span>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        autoFocus
+                        className="input-minimal"
+                        placeholder="name@domain.com"
+                      />
+                    </div>
+                    <div className="col" style={{ gap: "var(--gap-sm)" }}>
+                      <span className="meta text-xs">Password</span>
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="input-minimal"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </>
+                )}
 
-            {error && <span className="meta" style={{ color: "var(--accent)" }}>{error}</span>}
+                {phase === "otp_code" && (
+                  <>
+                    <div className="col" style={{ gap: 4 }}>
+                      <span className="meta text-xs">Code Sent To</span>
+                      <span className="num font-semibold text-fg text-sm">{email}</span>
+                    </div>
+                    <div className="col" style={{ gap: "var(--gap-sm)" }}>
+                      <span className="meta text-xs">6-Digit Code</span>
+                      <input
+                        inputMode="numeric"
+                        pattern="\d{6}"
+                        maxLength={6}
+                        value={code}
+                        onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        autoFocus
+                        className="input-minimal"
+                        style={{
+                          fontSize: 32,
+                          fontWeight: 700,
+                          letterSpacing: "0.2em",
+                          textAlign: "center",
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {error && <span className="meta text-xs" style={{ color: "var(--error)", textTransform: "none" }}>{error}</span>}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {phase !== "select" && (
-        <div className="col" style={{ marginTop: "var(--gap-lg)", gap: "var(--gap-md)" }}>
-          {phase === "email_otp" && (
-            <>
-              <button onClick={sendCode} disabled={busy || !email.includes("@")} style={btnPrimary}>
-                {busy ? "Sending Code…" : "Send Verification Code"}
-              </button>
-              <button onClick={() => setPhase("select")} style={btnSecondary}>
-                Back to Options
-              </button>
-            </>
-          )}
+          {phase !== "select" && (
+            <div className="col" style={{ gap: "var(--gap-md)" }}>
+              {phase === "email_otp" && (
+                <>
+                  <button onClick={sendCode} disabled={busy || !email.includes("@")} style={btnPrimary}>
+                    {busy ? "Sending Code…" : "Send Verification Code"}
+                  </button>
+                  <button onClick={() => setPhase("select")} style={btnSecondary}>
+                    Cancel
+                  </button>
+                </>
+              )}
 
-          {phase === "password" && (
-            <>
-              <button onClick={loginWithPassword} disabled={busy || !email || !password} style={btnPrimary}>
-                {busy ? "Signing In…" : "Sign In"}
-              </button>
-              <button onClick={() => setPhase("select")} style={btnSecondary}>
-                Back to Options
-              </button>
-            </>
-          )}
+              {phase === "password" && (
+                <>
+                  <button onClick={loginWithPassword} disabled={busy || !email || !password} style={btnPrimary}>
+                    {busy ? "Signing In…" : "Sign In"}
+                  </button>
+                  <button onClick={() => setPhase("select")} style={btnSecondary}>
+                    Cancel
+                  </button>
+                </>
+              )}
 
-          {phase === "otp_code" && (
-            <>
-              <button onClick={verifyCode} disabled={busy || code.length !== 6} style={btnPrimary}>
-                {busy ? "Verifying…" : "Verify Code"}
-              </button>
-              <button onClick={sendCode} disabled={busy} style={btnSecondary}>
-                Resend Email
-              </button>
-              <button onClick={() => { setPhase("select"); setCode(""); }} style={btnSecondary}>
-                Back to Options
-              </button>
-            </>
+              {phase === "otp_code" && (
+                <>
+                  <button onClick={verifyCode} disabled={busy || code.length !== 6} style={btnPrimary}>
+                    {busy ? "Verifying…" : "Verify Code"}
+                  </button>
+                  <button onClick={sendCode} disabled={busy} style={btnSecondary}>
+                    Resend Code
+                  </button>
+                  <button onClick={() => { setPhase("select"); setCode(""); }} style={btnSecondary}>
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
           )}
         </div>
-      )}
-    </main>
+      </main>
+
+      {/* Mini Footer */}
+      <footer className="p-6 text-center">
+        <span className="meta text-[10px] text-muted">
+          Secured with Supabase Auth
+        </span>
+      </footer>
+    </div>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 22,
-  fontWeight: 700,
-  background: "transparent",
+const btnPrimary: React.CSSProperties = {
+  background: "var(--accent)",
+  color: "#ffffff",
   border: 0,
-  borderBottom: "0.5px solid var(--border)",
-  color: "var(--fg)",
-  outline: "none",
-  padding: "8px 0",
+  padding: "14px 20px",
+  fontFamily: "var(--font-body)",
+  fontSize: 14,
+  fontWeight: 600,
+  borderRadius: "999px",
+  cursor: "pointer",
+  width: "100%",
+  textAlign: "center",
+  boxShadow: "0px 4px 12px rgba(0, 88, 188, 0.15)",
+  transition: "opacity 0.15s ease",
 };
 
-const btnPrimary: React.CSSProperties = {
-  background: "var(--accent)", color: "var(--bg)", border: "0.5px solid var(--accent)",
-  padding: "16px 24px", fontFamily: "var(--font-mono)", textTransform: "uppercase",
-  letterSpacing: "0.18em", fontSize: 12, fontWeight: 700, borderRadius: 4, cursor: "pointer",
-  width: "100%", textAlign: "center",
-};
 const btnSecondary: React.CSSProperties = {
-  background: "var(--surface)", color: "var(--fg)", border: "0.5px solid var(--border)",
-  padding: "16px 24px", fontFamily: "var(--font-mono)", textTransform: "uppercase",
-  letterSpacing: "0.18em", fontSize: 12, fontWeight: 700, borderRadius: 4, cursor: "pointer",
-  width: "100%", textAlign: "center",
+  background: "rgba(255, 255, 255, 0.6)",
+  color: "var(--fg)",
+  border: "1px solid var(--border)",
+  padding: "14px 20px",
+  fontFamily: "var(--font-body)",
+  fontSize: 14,
+  fontWeight: 500,
+  borderRadius: "999px",
+  cursor: "pointer",
+  width: "100%",
+  textAlign: "center",
+  transition: "background-color 0.15s ease",
 };

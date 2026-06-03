@@ -1,42 +1,43 @@
-/*
- * Dense Matrix tokens — web edition.
- * Mirrors the root /src/design/tokens.css verbatim. The web stack can
- * actually consume the oklch values natively, so unlike the RN port we
- * don't lose any fidelity here.
- */
-
 :root {
-  --bg:           oklch(12% 0.01  260);
-  --surface:      oklch(16% 0.015 260);
-  --fg:           oklch(95% 0.005 260);
-  --muted:        oklch(45% 0.01  260);
-  --border:       oklch(22% 0.02  260);
-  --accent:       oklch(70% 0.18  50);
+  --bg:                  #f7f9fb;
+  --surface:             #ffffff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low:    #f2f4f6;
+  --surface-container:        #eceef0;
+  --surface-container-high:   #e6e8ea;
+  --surface-container-highest:#e0e3e5;
+  --fg:                  #191c1e;
+  --muted:               #717786;
+  --border:              #c1c6d7;
+  --accent:              #0058bc;
+  --secondary:           #006875;
+  --secondary-container: #00e3fd;
 
-  --accent-soft:  color-mix(in oklch, var(--accent) 12%, transparent);
-  --accent-glow:  color-mix(in oklch, var(--accent) 40%, transparent);
-  --fg-soft:      color-mix(in oklch, var(--fg)      5%, transparent);
+  --accent-soft:         rgba(0, 88, 188, 0.08);
+  --accent-glow:         rgba(0, 88, 188, 0.15);
+  --fg-soft:             rgba(25, 28, 30, 0.05);
 
-  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text',    system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-display:        var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body:           var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:           var(--font-geist-mono), 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
-  --fs-h1:     clamp(48px, 8vw, 96px);
-  --fs-h2:     clamp(32px, 4vw, 56px);
-  --fs-h3:     24px;
-  --fs-lead:   20px;
-  --fs-body:   15px;
-  --fs-meta:   11px;
-  --fs-bignum: clamp(40px, 5vw, 72px);
+  --fs-h1:               clamp(40px, 6vw, 64px);
+  --fs-h2:               clamp(28px, 4vw, 36px);
+  --fs-h3:               20px;
+  --fs-lead:             16px;
+  --fs-body:             14px;
+  --fs-meta:             11px;
+  --fs-bignum:           clamp(32px, 5vw, 48px);
 
-  --radius:      2px;
-  --radius-card: 4px;
-  --hairline:    0.5px solid var(--border);
+  --radius:              8px;
+  --radius-card:         16px;
+  --hairline:            1px solid rgba(193, 198, 215, 0.4);
 
-  --gap-xs: 4px;
-  --gap-sm: 8px;
-  --gap-md: 16px;
-  --gap-lg: 40px;
-  --gap-xl: 80px;
-  --container: 1400px;
+  --gap-xs:              4px;
+  --gap-sm:              8px;
+  --gap-md:              16px;
+  --gap-lg:              24px;
+  --gap-xl:              40px;
+  --container:           1280px;
 }
+

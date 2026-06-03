@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dense Matrix - Trends &amp; Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#d8dadc",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-high": "#e6e8ea",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed-variant": "#004f58",
+                        "tertiary": "#5d5c5b",
+                        "outline": "#717786",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#001f24",
+                        "outline-variant": "#c1c6d7",
+                        "on-primary-container": "#fefcff",
+                        "surface-tint": "#005bc1",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f2f4f6",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-fixed-variant": "#004493",
+                        "primary-container": "#0070eb",
+                        "primary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#f7feff",
+                        "surface": "#f7f9fb",
+                        "on-surface-variant": "#414755",
+                        "background": "#f7f9fb",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#adc6ff",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary": "#0058bc",
+                        "secondary-container": "#00e3fd",
+                        "secondary": "#006875",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "secondary-fixed": "#9cf0ff",
+                        "tertiary-container": "#767474",
+                        "secondary-fixed-dim": "#00daf3",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#00616d",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001a41",
+                        "inverse-surface": "#2d3133",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "tertiary-fixed": "#e5e2e1",
+                        "surface-bright": "#f7f9fb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "container-max": "1280px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "label-sm": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "body-md": ["Geist"],
+                        "headline-lg-mobile": ["Geist"]
+                    },
+                    "fontSize": {
+                        "data-mono": ["18px", { "lineHeight": "24px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        /* Chart Area Fill Gradient */
+        .chart-gradient {
+            fill: url(#cyan-fade);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md text-body-md antialiased min-h-screen flex">
+<!-- SideNavBar (Shared Component) -->
+<nav class="bg-surface-container-lowest h-screen w-64 fixed left-0 top-0 border-r border-surface-variant flex flex-col py-margin-desktop z-50">
+<!-- Brand Header -->
+<div class="px-8 mb-12 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">biotech</span>
+</div>
+<div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface text-lg tracking-tight">Dense Matrix</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-1">Metabolic Intelligence</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 px-4 flex flex-col gap-2">
+<!-- Overview -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<!-- Workouts -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-body-md text-body-md">Workouts</span>
+</a>
+<!-- Nutrition -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="font-body-md text-body-md">Nutrition</span>
+</a>
+<!-- Biometrics -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+<span class="font-body-md text-body-md">Biometrics</span>
+</a>
+<!-- Analytics (ACTIVE) -->
+<a class="flex items-center gap-4 px-4 py-3 bg-surface-container-low text-primary font-bold border-r-4 border-primary transition-all duration-150 scale-95 origin-left" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-body-md text-body-md">Analytics</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors duration-150 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface/80 backdrop-blur-3xl docked full-width top-0 sticky border-b border-surface-variant shadow-sm flex justify-between items-center w-full px-margin-desktop py-4 z-40 h-[72px]">
+<div class="hidden text-headline-lg font-headline-lg text-on-surface">Dense Matrix</div>
+<div class="flex-1 flex justify-end items-center gap-6">
+<!-- Search (on_right) -->
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-lowest border border-surface-variant rounded-full font-label-sm text-label-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all w-64 outline-none" placeholder="Query metrics..." type="text"/>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4 border-l border-surface-variant pl-6">
+<button class="text-on-surface-variant hover:text-primary transition-all focus:ring-2 focus:ring-primary/10 rounded-full p-1">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all focus:ring-2 focus:ring-primary/10 rounded-full p-1">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<img alt="User avatar" class="w-8 h-8 rounded-full border border-surface-variant object-cover" data-alt="A professional headshot of a user, softly lit with a neutral medical-white studio background. The portrait is sharp, minimalist, and conveys a sense of calm authority fitting for a high-end health intelligence platform. The lighting highlights subtle details without casting harsh shadows, maintaining the overarching clean, clinical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzRjPBleCpG3tHY_Xi9JQLaJe1i5vYY2IjC1DNsnbqE0fzSVZJsC2kGptbXE66AjQgM6oXxthRINWeN2uR-nzlH_Z6QEQJP9NfHKCwUfG-C3G4BmHhxAgnW3xyaQjL9WPBLnd8xBG6flcY9oyerSOBeCiL-YgIq_aKlwsrEK_XA64-AZyA7Z4n2I1dZsmG-pqkGVjl9zwm2JlXI_m7Pq0a7bU_wledubFV2r64KFOsEO7rkxLKy-iXOq8twrvOjAEg1toiJ5hqt3o"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Body -->
+<main class="flex-1 p-margin-desktop">
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Trends &amp; Analytics</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Macro-level metabolic performance and prediction convergence.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2 bg-surface-container-lowest border border-surface-variant rounded-full font-label-sm text-label-sm text-on-surface hover:border-secondary-container hover:text-secondary transition-all">Export Report</button>
+<button class="px-6 py-2 bg-on-surface text-on-primary rounded-full font-label-sm text-label-sm hover:opacity-90 transition-opacity">Run Diagnostics</button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Hero Chart: Weight Trajectory (EWMA) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest border border-surface-variant rounded-xl p-8 flex flex-col relative overflow-hidden">
+<div class="flex justify-between items-start mb-12 relative z-10">
+<div>
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-widest mb-2">Weight Trajectory (EWMA Smoothed)</h3>
+<div class="flex items-baseline gap-4">
+<span class="font-data-mono text-display-lg text-on-surface">76.4<span class="text-headline-lg text-outline ml-1">kg</span></span>
+<span class="flex items-center gap-1 font-data-mono text-label-sm text-secondary-container bg-secondary-fixed/20 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span> 0.8kg / wk
+                                </span>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 text-xs font-label-sm rounded bg-surface border border-surface-variant text-on-surface cursor-pointer">1W</span>
+<span class="px-3 py-1 text-xs font-label-sm rounded bg-primary text-on-primary cursor-pointer shadow-[0_4px_12px_rgba(0,88,188,0.2)]">1M</span>
+<span class="px-3 py-1 text-xs font-label-sm rounded bg-surface border border-surface-variant text-on-surface cursor-pointer">3M</span>
+</div>
+</div>
+<!-- SVG Chart Area -->
+<div class="flex-1 w-full min-h-[240px] relative mt-auto">
+<svg class="absolute bottom-0 w-full h-full" height="100%" preserveaspectratio="none" viewbox="0 0 800 240" width="100%">
+<defs>
+<lineargradient id="cyan-fade" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#00daf3" stop-opacity="0.15"></stop>
+<stop offset="100%" stop-color="#00daf3" stop-opacity="0"></stop>
+</lineargradient>
+<lineargradient id="line-gradient" x1="0" x2="1" y1="0" y2="0">
+<stop offset="0%" stop-color="#c1c6d7"></stop>
+<stop offset="50%" stop-color="#0058bc"></stop>
+<stop offset="100%" stop-color="#00daf3"></stop>
+</lineargradient>
+</defs>
+<!-- Grid lines -->
+<path d="M0,40 L800,40 M0,100 L800,100 M0,160 L800,160 M0,220 L800,220" fill="none" stroke="#e0e3e5" stroke-dasharray="4 4" stroke-width="1"></path>
+<!-- Data Fill -->
+<path class="chart-gradient" d="M0,180 Q100,170 200,150 T400,120 T600,80 T800,60 L800,240 L0,240 Z"></path>
+<!-- Raw Data scatter (faint) -->
+<circle cx="100" cy="165" fill="#c1c6d7" r="2"></circle>
+<circle cx="200" cy="155" fill="#c1c6d7" r="2"></circle>
+<circle cx="300" cy="130" fill="#c1c6d7" r="2"></circle>
+<circle cx="400" cy="125" fill="#c1c6d7" r="2"></circle>
+<circle cx="500" cy="95" fill="#c1c6d7" r="2"></circle>
+<circle cx="600" cy="85" fill="#c1c6d7" r="2"></circle>
+<circle cx="700" cy="65" fill="#c1c6d7" r="2"></circle>
+<circle cx="800" cy="55" fill="#c1c6d7" r="2"></circle>
+<!-- EWMA Trend Line -->
+<path d="M0,180 Q100,170 200,150 T400,120 T600,80 T800,60" fill="none" stroke="url(#line-gradient)" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<!-- Current Indicator point -->
+<circle class="animate-pulse" cx="800" cy="60" fill="#ffffff" r="5" stroke="#00daf3" stroke-width="2"></circle>
+</svg>
+<!-- Axis Labels -->
+<div class="absolute bottom-[-24px] w-full flex justify-between text-outline font-label-sm text-[10px]">
+<span>Oct 01</span>
+<span>Oct 08</span>
+<span>Oct 15</span>
+<span>Oct 22</span>
+<span>Today</span>
+</div>
+</div>
+</div>
+<!-- Metabolic Insights Sidebar -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-widest pl-2">Metabolic Insights</h3>
+<!-- Insight Card 1 -->
+<div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-6 relative overflow-hidden group hover:border-primary-fixed-dim transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary-fixed-dim">model_training</span>
+<span class="font-data-mono text-label-sm text-outline">Delta: -2.4%</span>
+</div>
+<h4 class="font-body-md text-on-surface font-semibold mb-2">TDEE Overperformance</h4>
+<p class="font-label-sm text-on-surface-variant leading-relaxed">Actual energy expenditure is tracking slightly higher than the baseline predictive model. Consider a minor upward adjustment to intake if fatigue occurs.</p>
+</div>
+<!-- Insight Card 2 -->
+<div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-6 relative overflow-hidden group hover:border-primary-fixed-dim transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary">water_drop</span>
+<span class="font-data-mono text-label-sm text-outline">Vol: +1.2L</span>
+</div>
+<h4 class="font-body-md text-on-surface font-semibold mb-2">Hydration Retention</h4>
+<p class="font-label-sm text-on-surface-variant leading-relaxed">Recent raw weight spike correlates heavily with calculated sodium load. EWMA remains unaffected. No action required.</p>
+</div>
+</div>
+<!-- Secondary Chart: TDEE Convergence -->
+<div class="col-span-12 lg:col-span-6 bg-surface-container-lowest border border-surface-variant rounded-xl p-8">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-widest mb-6">TDEE Convergence History</h3>
+<div class="h-[200px] relative w-full flex items-end justify-between px-2">
+<!-- Simulated Bar/Step Chart for Convergence -->
+<div class="w-8 bg-surface-variant h-[40%] rounded-t relative group">
+<div class="absolute bottom-full mb-2 w-full text-center font-data-mono text-[10px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">2450</div>
+</div>
+<div class="w-8 bg-surface-variant h-[50%] rounded-t"></div>
+<div class="w-8 bg-surface-variant h-[45%] rounded-t"></div>
+<div class="w-8 bg-surface-variant h-[60%] rounded-t"></div>
+<div class="w-8 bg-primary-fixed-dim h-[65%] rounded-t relative">
+<div class="absolute top-0 w-full h-1 bg-primary"></div>
+</div>
+<div class="w-8 bg-primary-fixed-dim h-[70%] rounded-t relative">
+<div class="absolute top-0 w-full h-1 bg-primary"></div>
+</div>
+<div class="w-8 bg-secondary-fixed h-[75%] rounded-t relative">
+<div class="absolute top-0 w-full h-1 bg-secondary-fixed-dim shadow-[0_0_8px_rgba(0,218,243,0.6)]"></div>
+</div>
+<!-- Connecting prediction line -->
+<svg class="absolute top-0 left-0 w-full h-full pointer-events-none" preserveaspectratio="none" viewbox="0 0 100 100">
+<path d="M5,60 L20,50 L35,55 L50,40 L65,35 L80,30 L95,25" fill="none" stroke="#717786" stroke-dasharray="2 2" stroke-width="1"></path>
+</svg>
+</div>
+<div class="mt-6 flex justify-between font-label-sm text-outline border-t border-surface-variant pt-4">
+<div class="flex items-center gap-2"><div class="w-3 h-3 bg-surface-variant rounded"></div> <span class="text-xs">Initial Model</span></div>
+<div class="flex items-center gap-2"><div class="w-3 h-3 bg-primary-fixed-dim rounded"></div> <span class="text-xs">Adapting</span></div>
+<div class="flex items-center gap-2"><div class="w-3 h-3 bg-secondary-fixed rounded"></div> <span class="text-xs">Converged</span></div>
+</div>
+</div>
+<!-- Data Table: Weekly Audit -->
+<div class="col-span-12 lg:col-span-6 bg-surface-container-lowest border border-surface-variant rounded-xl overflow-hidden flex flex-col">
+<div class="p-6 border-b border-surface-variant">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Weekly Audit Results</h3>
+</div>
+<div class="flex-1 overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface">
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-medium border-b border-surface-variant">Week Of</th>
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-medium border-b border-surface-variant">Avg Intake</th>
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-medium border-b border-surface-variant">Actual Δ</th>
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-medium border-b border-surface-variant">Predicted Δ</th>
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-medium border-b border-surface-variant text-right">Variance</th>
+</tr>
+</thead>
+<tbody class="font-data-mono text-[14px]">
+<tr class="hover:bg-surface-bright transition-colors border-b border-surface-variant/50">
+<td class="p-4 text-outline font-label-sm">Oct 15</td>
+<td class="p-4 text-on-surface">2,410 <span class="text-xs text-outline font-label-sm">kcal</span></td>
+<td class="p-4 text-on-surface">-0.8 kg</td>
+<td class="p-4 text-outline">-0.7 kg</td>
+<td class="p-4 text-right text-secondary-container">+0.1 kg</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors border-b border-surface-variant/50">
+<td class="p-4 text-outline font-label-sm">Oct 08</td>
+<td class="p-4 text-on-surface">2,385 <span class="text-xs text-outline font-label-sm">kcal</span></td>
+<td class="p-4 text-on-surface">-0.9 kg</td>
+<td class="p-4 text-outline">-0.8 kg</td>
+<td class="p-4 text-right text-secondary-container">+0.1 kg</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors border-b border-surface-variant/50">
+<td class="p-4 text-outline font-label-sm">Oct 01</td>
+<td class="p-4 text-on-surface">2,550 <span class="text-xs text-outline font-label-sm">kcal</span></td>
+<td class="p-4 text-on-surface">-0.2 kg</td>
+<td class="p-4 text-outline">-0.4 kg</td>
+<td class="p-4 text-right text-error-container text-error">-0.2 kg</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-4 text-outline font-label-sm">Sep 24</td>
+<td class="p-4 text-on-surface">2,490 <span class="text-xs text-outline font-label-sm">kcal</span></td>
+<td class="p-4 text-on-surface">-0.5 kg</td>
+<td class="p-4 text-outline">-0.5 kg</td>
+<td class="p-4 text-right text-outline">0.0 kg</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

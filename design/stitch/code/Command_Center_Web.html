@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard - Dense Matrix</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#005bc1",
+                      "on-primary-fixed-variant": "#004493",
+                      "surface-container-low": "#f2f4f6",
+                      "on-surface": "#191c1e",
+                      "inverse-surface": "#2d3133",
+                      "on-surface-variant": "#414755",
+                      "surface-dim": "#d8dadc",
+                      "on-tertiary-fixed": "#1c1b1b",
+                      "tertiary-fixed-dim": "#c8c6c5",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-container": "#f7feff",
+                      "secondary-fixed-dim": "#00daf3",
+                      "primary-container": "#0070eb",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-error-container": "#93000a",
+                      "on-background": "#191c1e",
+                      "primary": "#0058bc",
+                      "secondary-fixed": "#9cf0ff",
+                      "secondary-container": "#00e3fd",
+                      "background": "#f7f9fb",
+                      "outline-variant": "#c1c6d7",
+                      "on-secondary-fixed": "#001f24",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary": "#006875",
+                      "inverse-on-surface": "#eff1f3",
+                      "outline": "#717786",
+                      "surface": "#f7f9fb",
+                      "tertiary": "#5d5c5b",
+                      "on-secondary-container": "#00616d",
+                      "on-primary-fixed": "#001a41",
+                      "on-tertiary": "#ffffff",
+                      "surface-container": "#eceef0",
+                      "on-secondary": "#ffffff",
+                      "tertiary-fixed": "#e5e2e1",
+                      "primary-fixed": "#d8e2ff",
+                      "surface-container-high": "#e6e8ea",
+                      "primary-fixed-dim": "#adc6ff",
+                      "on-error": "#ffffff",
+                      "surface-variant": "#e0e3e5",
+                      "on-primary-container": "#fefcff",
+                      "tertiary-container": "#767474",
+                      "error": "#ba1a1a",
+                      "surface-bright": "#f7f9fb",
+                      "inverse-primary": "#adc6ff",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed-variant": "#004f58",
+                      "on-tertiary-fixed-variant": "#474646"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "unit": "4px",
+                      "container-max": "1280px",
+                      "margin-desktop": "40px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Geist"
+                      ],
+                      "data-mono": [
+                              "Geist"
+                      ],
+                      "headline-lg-mobile": [
+                              "Geist"
+                      ],
+                      "body-md": [
+                              "Geist"
+                      ],
+                      "headline-lg": [
+                              "Geist"
+                      ],
+                      "label-sm": [
+                              "Geist"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F8FAFC; /* Silver base */
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid #E2E8F0;
+        }
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .primary-glow {
+            box-shadow: 0px 8px 32px rgba(0, 122, 255, 0.05);
+        }
+        .text-cyan {
+            color: #00E5FF;
+        }
+        .bg-cyan {
+            background-color: #00E5FF;
+        }
+        .border-cyan {
+            border-color: #00E5FF;
+        }
+        
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E2E8F0; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #CBD5E1; 
+        }
+    </style>
+</head>
+<body class="text-on-surface font-body-md antialiased overflow-x-hidden min-h-screen flex">
+<!-- SideNavBar (Desktop Only based on prompt context, though responsive classes apply) -->
+<nav class="hidden md:flex bg-surface-container-lowest/60 dark:bg-surface-container-low/40 backdrop-blur-md docked left h-screen w-64 border-r border-outline-variant/20 shadow-none fixed left-0 top-0 flex-col py-8 px-4 z-40">
+<!-- Brand (Hidden as per JSON, but we need something for the layout, perhaps just spacing or a custom logo if requested. The prompt image has a logo. We will follow JSON strictness but add a placeholder container to match layout if needed, though JSON says hidden) -->
+<div class="mb-10 px-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined font-bold text-xl" data-icon="hub">hub</span>
+</div>
+<span class="font-headline-lg-mobile text-on-surface font-bold">Dense Matrix</span>
+</div>
+<div class="mb-8 px-4">
+<div class="flex items-center gap-3 mb-2">
+<img alt="User Profile" class="w-10 h-10 rounded-full border border-outline-variant/30 object-cover" data-alt="A close-up portrait of a professional man in a bright, modern clinical setting, matching the 'Medical White' aesthetic. Soft, natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-stEC6360GgCRaVWUjsPF2lm2eA4JTHcen5Xdx1JFX84eiJvZOb7EPr54TYp7fy35mtObTcPpsUWhzi2YuJOk-bA875FE0hjpyHXZ9HwjoJAj46DOWEsqfOOux9e06lYczHVRDxse0ZGomfW-BvSovOnvsrdrv8MgKlQtDgwLlfGAZsaRnZq5F5y0SEtFxnjMm6cLUPV6jD4El05PbFaM5nsBqmIlmw5tine9SyT8-rVICEtJ1_VD7HGH3Cc6hQT4TFKpSibYIlE"/>
+<div>
+<h3 class="font-body-md font-semibold text-on-surface">Lionel M.</h3>
+<p class="font-label-sm text-on-surface-variant">Metabolic Level 8.4</p>
+</div>
+</div>
+<button class="w-full mt-4 py-2 px-4 rounded-xl border border-primary/20 text-primary font-label-sm font-semibold hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
+                Upgrade to Pro
+            </button>
+</div>
+<div class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary dark:bg-primary-container/20 dark:text-primary-fixed rounded-xl font-bold Active: scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                Overview
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant/80 hover:bg-surface-container-highest/50 dark:hover:bg-surface-container-high/50 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+                Workouts
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant/80 hover:bg-surface-container-highest/50 dark:hover:bg-surface-container-high/50 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+                Nutrition
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant/80 hover:bg-surface-container-highest/50 dark:hover:bg-surface-container-high/50 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+                Biometrics
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant/80 hover:bg-surface-container-highest/50 dark:hover:bg-surface-container-high/50 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
+                Analytics
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant/80 hover:bg-surface-container-highest/50 dark:hover:bg-surface-container-high/50 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-auto pt-4 border-t border-outline-variant/20 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-on-surface-variant/80 hover:bg-surface-container-highest/50 dark:hover:bg-surface-container-high/50 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-sm">Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-on-surface-variant/80 hover:bg-surface-container-highest/50 dark:hover:bg-surface-container-high/50 rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-sm">Logout</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 p-margin-mobile md:p-gutter xl:p-margin-desktop min-h-screen flex flex-col max-w-container-max mx-auto w-full">
+<!-- Header -->
+<header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+<div>
+<h1 class="font-headline-lg text-on-surface">Your Fitness at a Glance</h1>
+<p class="font-body-md text-on-surface-variant mt-1">Track your progress across workouts, calories, hydration, and overall activity</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="glass-panel rounded-full px-4 py-2 flex items-center gap-2 text-on-surface-variant text-sm font-medium">
+<span class="material-symbols-outlined text-lg" data-icon="calendar_month">calendar_month</span>
+                    March 18, 2025
+                </div>
+<button class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-on-surface-variant relative hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+</header>
+<!-- Telemetry Grid (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-min">
+<!-- Water Intake -->
+<div class="glass-card rounded-2xl p-6 md:col-span-4 lg:col-span-3 flex flex-col relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-body-md font-medium text-on-surface-variant">Water</h3>
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined text-sm" data-icon="water_drop">water_drop</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2 mb-6">
+<span class="font-display-lg text-on-surface">2.1</span>
+<span class="font-body-md text-on-surface-variant">Liters</span>
+</div>
+<!-- Fluid visualizer -->
+<div class="mt-auto h-16 w-full relative -mx-6 -mb-6">
+<div class="absolute inset-0 bg-gradient-to-t from-secondary-container/30 to-transparent"></div>
+<svg class="absolute bottom-0 w-full text-secondary-container/20" preserveaspectratio="none" style="height: 100%;" viewbox="0 0 100 30">
+<path d="M0 30 V15 Q15 5 25 15 T50 15 T75 15 T100 15 V30 z" fill="currentColor"></path>
+</svg>
+</div>
+<div class="mt-4 flex items-center gap-2 z-10">
+<span class="px-2 py-1 bg-surface-container-high rounded text-xs font-semibold text-on-surface">85%</span>
+<span class="text-xs text-on-surface-variant">Out of 3 Liters goal</span>
+</div>
+</div>
+<!-- Calories -->
+<div class="glass-card rounded-2xl p-6 md:col-span-4 lg:col-span-3 flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-body-md font-medium text-on-surface-variant">Calories</h3>
+<div class="w-8 h-8 rounded-full bg-primary-container/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="local_fire_department">local_fire_department</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="font-display-lg text-on-surface">2.5K</span>
+<span class="font-body-md text-on-surface-variant">kcal</span>
+</div>
+<!-- Minimalist bar chart -->
+<div class="flex items-end gap-1 h-8 mb-4 mt-auto">
+<div class="w-full bg-primary/20 rounded-t-sm h-[40%]"></div>
+<div class="w-full bg-primary/40 rounded-t-sm h-[60%]"></div>
+<div class="w-full bg-primary/60 rounded-t-sm h-[80%]"></div>
+<div class="w-full bg-primary rounded-t-sm h-[100%]"></div>
+<div class="w-full bg-surface-container-high rounded-t-sm h-[30%]"></div>
+<div class="w-full bg-surface-container-high rounded-t-sm h-[20%]"></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-semibold">10%</span>
+<span class="text-xs text-on-surface-variant">Increased from Yesterday</span>
+</div>
+</div>
+<!-- Step Goals (Runway Gauge) -->
+<div class="glass-card rounded-2xl p-6 md:col-span-4 lg:col-span-3 flex flex-col items-center justify-center relative">
+<div class="absolute top-6 left-6 right-6 flex justify-between items-start">
+<h3 class="font-body-md font-medium text-on-surface-variant">Step Goals</h3>
+<div class="w-8 h-8 rounded-full bg-on-surface flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm" data-icon="directions_walk">directions_walk</span>
+</div>
+</div>
+<div class="relative w-32 h-32 mt-8 mb-4">
+<!-- Faux Gauge using SVG -->
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<circle class="transform rotate-180 origin-center opacity-50" cx="50" cy="50" fill="none" r="45" stroke="#E2E8F0" stroke-dasharray="141.37 141.37" stroke-dashoffset="141.37" stroke-width="10"></circle>
+<circle class="transform rotate-180 origin-center" cx="50" cy="50" fill="none" r="45" stroke="#00E5FF" stroke-dasharray="282.74" stroke-dashoffset="60" stroke-linecap="round" stroke-width="10"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center flex-col">
+<span class="font-headline-lg-mobile font-bold text-on-surface">82.4%</span>
+</div>
+</div>
+<p class="text-xs text-on-surface-variant text-center mt-auto">Increase your daily steps</p>
+</div>
+<!-- Map/Route (Placeholder for image) -->
+<div class="glass-card rounded-2xl p-2 md:col-span-12 lg:col-span-3 relative min-h-[200px] overflow-hidden group">
+<img alt="New Route Map" class="absolute inset-0 w-full h-full object-cover rounded-xl opacity-60" data-alt="A clean, minimalist street map interface in light mode, highlighting a specific running route with a vibrant primary blue path line and a glowing cyan end marker. High contrast, clinical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoNaMyygPtbQ6-DpyNPU0mwmWEEv5EfCU0iow_oqs3y-v1LOibvGjFk2yKe3-gGwzuM8CoUpPpvv_rciTHBWjmOMJp4aqnPmIEuzPeVJenws1fle8Nw5tpNQCIV9F4LvJypMJhMhQD9IdtvJ4BJ4OVaaMzhY0MLAFTDtlTOPDWy9YCw4ouzZd8ilj1I-XifXdrog5Qdx0cClutoACtEOVGc_PUn_sMLzscW0mElevdlKhGePh03emvzX2FwI7Tp1zr04pMWjt8_R8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent"></div>
+<div class="relative z-10 p-4 h-full flex flex-col justify-between pointer-events-none">
+<h3 class="font-body-md font-semibold text-on-surface bg-white/50 backdrop-blur-sm self-start px-3 py-1 rounded-full">New Route</h3>
+<div class="self-end mt-auto pointer-events-auto">
+<button class="w-8 h-8 bg-on-surface text-white rounded-full flex items-center justify-center hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="open_in_full">open_in_full</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

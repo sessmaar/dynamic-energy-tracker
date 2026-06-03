@@ -1,0 +1,141 @@
+{
+  "designSystem": {
+    "displayName": "Modern Fluidity",
+    "styleGuidelines": "## Brand & Style\n\nThe design system is centered on the concept of \"Trajectory\"—a sophisticated, continuous journey toward a better self. It moves away from rigid data points toward fluid progression. The target audience is the discerning, tech-savvy individual who values clarity and a futuristic aesthetic.\n\nThe visual style is a refined mix of **Modern Corporate** and **Glassmorphism**. It evokes an emotional response of calm confidence and technological precision. Interfaces should feel lightweight, breathable, and deeply immersive through the use of translucent layers, background blurs, and organic motion. Every interaction should feel like a smooth transition in a larger, cohesive narrative.\n\n## Layout & Spacing\n\nThe layout philosophy is based on **Fluidity**. Content should never feel boxed in; instead, it should float within a systematic grid.\n\n- **Grid System:** Use a 12-column fluid grid for desktop and a 4-column grid for mobile.\n- **Spacing Rhythm:** An 8px linear scale is the standard, but use 4px increments for tight component internals (e.g., icons inside buttons).\n- **Safe Areas:** Large external margins (80px+) on desktop create a \"gallery\" feel, focusing the user's eye on the central trajectory data.\n- **Reflow:** On mobile, complex horizontal data visualizations should transform into vertical \"journey cards\" or use horizontal panning with faded edge masks to indicate more content.\n\n## Elevation & Depth\n\nHierarchy is achieved through **Tonal Layers** and **Glassmorphism** rather than traditional drop shadows.\n\n1.  **Level 0 (Base):** Deep Midnight (#0F172A). The \"void\" where the journey begins.\n2.  **Level 1 (Surface):** Semi-transparent fills (rgba 255, 255, 255, 0.05) with a 1px inner border to define edges.\n3.  **Level 2 (Active/Floating):** Use a `backdrop-filter: blur(20px)` with a slightly brighter glass fill. This level uses a \"glow\" shadow instead of a dark one—utilizing the Primary Blue at 10-15% opacity to create an emissive effect.\n4.  **Level 3 (Modals/Popovers):** Maximum contrast. High blur values (40px) and a more opaque border to separate the element from the data beneath.\n\n## Components\n\n- **Buttons:** Primary buttons use a subtle vertical gradient of Primary to Secondary color. Hover states should trigger a soft outer glow. Secondary buttons are \"ghost\" style with a glass background and a 1px border.\n- **Trajectory Cards:** The core component. Features a blurred glass background, a prominent Geist headline for the main metric, and a sparkline visualization using a cyan-to-blue gradient.\n- **Input Fields:** Minimalist design with only a bottom border that \"lights up\" with a gradient when focused. Labels float above the field in `label-sm` typography.\n- **Chips/Status:** Use pill shapes with high-saturation backgrounds at low opacity (e.g., 10% Cyan for a \"Progress\" tag) with a solid colored dot for status indication.\n- **Navigation:** A floating bottom-dock (on mobile) or a slim side-rail (on desktop) using high-blur glassmorphism. Icons should be lightweight, 2px stroke weight, non-filled.\n- **Charts:** The \"Trajectory\" path is always a smooth, anti-aliased curve (spline) with a gradient stroke. Data points are soft-glowing circles that appear on hover.",
+    "theme": {
+      "bodyFont": "GEIST",
+      "bodyFontFamily": "Geist",
+      "colorMode": "DARK",
+      "colorVariant": "FIDELITY",
+      "customColor": "#3b82f6",
+      "designMd": "---\nname: Modern Fluidity\ncolors:\n  surface: '#0b1326'\n  surface-dim: '#0b1326'\n  surface-bright: '#31394d'\n  surface-container-lowest: '#060e20'\n  surface-container-low: '#131b2e'\n  surface-container: '#171f33'\n  surface-container-high: '#222a3d'\n  surface-container-highest: '#2d3449'\n  on-surface: '#dae2fd'\n  on-surface-variant: '#c2c6d6'\n  inverse-surface: '#dae2fd'\n  inverse-on-surface: '#283044'\n  outline: '#8c909f'\n  outline-variant: '#424754'\n  surface-tint: '#adc6ff'\n  primary: '#adc6ff'\n  on-primary: '#002e6a'\n  primary-container: '#4d8eff'\n  on-primary-container: '#00285d'\n  inverse-primary: '#005ac2'\n  secondary: '#5de6ff'\n  on-secondary: '#00363e'\n  secondary-container: '#00cbe6'\n  on-secondary-container: '#00515d'\n  tertiary: '#bdc2ff'\n  on-tertiary: '#131e8c'\n  tertiary-container: '#7c87f3'\n  on-tertiary-container: '#081486'\n  error: '#ffb4ab'\n  on-error: '#690005'\n  error-container: '#93000a'\n  on-error-container: '#ffdad6'\n  primary-fixed: '#d8e2ff'\n  primary-fixed-dim: '#adc6ff'\n  on-primary-fixed: '#001a42'\n  on-primary-fixed-variant: '#004395'\n  secondary-fixed: '#a2eeff'\n  secondary-fixed-dim: '#2fd9f4'\n  on-secondary-fixed: '#001f25'\n  on-secondary-fixed-variant: '#004e5a'\n  tertiary-fixed: '#e0e0ff'\n  tertiary-fixed-dim: '#bdc2ff'\n  on-tertiary-fixed: '#000767'\n  on-tertiary-fixed-variant: '#2f3aa3'\n  background: '#0b1326'\n  on-background: '#dae2fd'\n  surface-variant: '#2d3449'\ntypography:\n  display-xl:\n    fontFamily: Geist\n    fontSize: 64px\n    fontWeight: '700'\n    lineHeight: '1.1'\n    letterSpacing: -0.04em\n  headline-lg:\n    fontFamily: Geist\n    fontSize: 40px\n    fontWeight: '600'\n    lineHeight: '1.2'\n    letterSpacing: -0.02em\n  headline-lg-mobile:\n    fontFamily: Geist\n    fontSize: 32px\n    fontWeight: '600'\n    lineHeight: '1.2'\n    letterSpacing: -0.02em\n  headline-md:\n    fontFamily: Geist\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: '1.3'\n  body-lg:\n    fontFamily: Geist\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.6'\n  body-md:\n    fontFamily: Geist\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: '1.6'\n  label-md:\n    fontFamily: Geist\n    fontSize: 14px\n    fontWeight: '500'\n    lineHeight: '1.2'\n    letterSpacing: 0.05em\n  label-sm:\n    fontFamily: Geist\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: '1.2'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  base: 4px\n  xs: 8px\n  sm: 16px\n  md: 24px\n  lg: 40px\n  xl: 64px\n  gutter: 20px\n  margin-mobile: 20px\n  margin-desktop: 80px\n---\n\n## Brand & Style\n\nThe design system is centered on the concept of \"Trajectory\"—a sophisticated, continuous journey toward a better self. It moves away from rigid data points toward fluid progression. The target audience is the discerning, tech-savvy individual who values clarity and a futuristic aesthetic.\n\nThe visual style is a refined mix of **Modern Corporate** and **Glassmorphism**. It evokes an emotional response of calm confidence and technological precision. Interfaces should feel lightweight, breathable, and deeply immersive through the use of translucent layers, background blurs, and organic motion. Every interaction should feel like a smooth transition in a larger, cohesive narrative.\n\n## Colors\n\nThe palette is rooted in a \"Deep Midnight\" foundation, providing a high-end, cinematic backdrop. \n\n- **Primary (Electric Blue):** Used for critical trajectory paths, primary actions, and active states.\n- **Secondary (Cyan):** Used for accentuating data highlights, success states, and secondary visual flourishes.\n- **Tertiary (Indigo):** Used for subtle depth, background gradients, and categorizing secondary data streams.\n- **Surface Strategy:** Backgrounds utilize the deep neutral. Overlays and containers use a semi-transparent glass effect with a subtle blur (20px-40px) to maintain legibility while preserving the sense of depth.\n\n## Typography\n\nThis design system utilizes **Geist** for its technical precision and modern, approachable geometric shapes. \n\n- **Display & Headlines:** Use tight letter spacing and heavier weights to create a \"command center\" feel. Large display sizes are reserved for high-impact trajectory stats.\n- **Body Text:** Standard weights with generous line heights ensure effortless reading against dark, translucent backgrounds.\n- **Labels:** Uppercase tracking is applied to labels to differentiate metadata from instructional content.\n- **Responsive Scaling:** Headline sizes reduce by approximately 20% on mobile devices to maintain visual hierarchy without overwhelming the smaller viewport.\n\n## Layout & Spacing\n\nThe layout philosophy is based on **Fluidity**. Content should never feel boxed in; instead, it should float within a systematic grid.\n\n- **Grid System:** Use a 12-column fluid grid for desktop and a 4-column grid for mobile.\n- **Spacing Rhythm:** An 8px linear scale is the standard, but use 4px increments for tight component internals (e.g., icons inside buttons).\n- **Safe Areas:** Large external margins (80px+) on desktop create a \"gallery\" feel, focusing the user's eye on the central trajectory data.\n- **Reflow:** On mobile, complex horizontal data visualizations should transform into vertical \"journey cards\" or use horizontal panning with faded edge masks to indicate more content.\n\n## Elevation & Depth\n\nHierarchy is achieved through **Tonal Layers** and **Glassmorphism** rather than traditional drop shadows.\n\n1.  **Level 0 (Base):** Deep Midnight (#0F172A). The \"void\" where the journey begins.\n2.  **Level 1 (Surface):** Semi-transparent fills (rgba 255, 255, 255, 0.05) with a 1px inner border to define edges.\n3.  **Level 2 (Active/Floating):** Use a `backdrop-filter: blur(20px)` with a slightly brighter glass fill. This level uses a \"glow\" shadow instead of a dark one—utilizing the Primary Blue at 10-15% opacity to create an emissive effect.\n4.  **Level 3 (Modals/Popovers):** Maximum contrast. High blur values (40px) and a more opaque border to separate the element from the data beneath.\n\n## Shapes\n\nThe shape language is **Rounded**, favoring organic, smooth corners that complement the fluid trajectory theme.\n\n- **Standard Elements:** Buttons and input fields use a 0.5rem (8px) radius.\n- **Containers:** Cards and glass panels use `rounded-lg` (1rem / 16px) to create a soft, modern frame.\n- **Interactive Accents:** Progress bars and selection indicators should use fully rounded (pill-shaped) ends to emphasize movement and flow.\n- **Borders:** All borders should be thin (1px) and use low-contrast, semi-transparent strokes to maintain the glass effect.\n\n## Components\n\n- **Buttons:** Primary buttons use a subtle vertical gradient of Primary to Secondary color. Hover states should trigger a soft outer glow. Secondary buttons are \"ghost\" style with a glass background and a 1px border.\n- **Trajectory Cards:** The core component. Features a blurred glass background, a prominent Geist headline for the main metric, and a sparkline visualization using a cyan-to-blue gradient.\n- **Input Fields:** Minimalist design with only a bottom border that \"lights up\" with a gradient when focused. Labels float above the field in `label-sm` typography.\n- **Chips/Status:** Use pill shapes with high-saturation backgrounds at low opacity (e.g., 10% Cyan for a \"Progress\" tag) with a solid colored dot for status indication.\n- **Navigation:** A floating bottom-dock (on mobile) or a slim side-rail (on desktop) using high-blur glassmorphism. Icons should be lightweight, 2px stroke weight, non-filled.\n- **Charts:** The \"Trajectory\" path is always a smooth, anti-aliased curve (spline) with a gradient stroke. Data points are soft-glowing circles that appear on hover.",
+      "font": "GEIST",
+      "headlineFont": "GEIST",
+      "headlineFontFamily": "Geist",
+      "labelFont": "GEIST",
+      "labelFontFamily": "Geist",
+      "namedColors": {
+        "background": "#0b1326",
+        "error": "#ffb4ab",
+        "error_container": "#93000a",
+        "inverse_on_surface": "#283044",
+        "inverse_primary": "#005ac2",
+        "inverse_surface": "#dae2fd",
+        "on_background": "#dae2fd",
+        "on_error": "#690005",
+        "on_error_container": "#ffdad6",
+        "on_primary": "#002e6a",
+        "on_primary_container": "#00285d",
+        "on_primary_fixed": "#001a42",
+        "on_primary_fixed_variant": "#004395",
+        "on_secondary": "#00363e",
+        "on_secondary_container": "#00515d",
+        "on_secondary_fixed": "#001f25",
+        "on_secondary_fixed_variant": "#004e5a",
+        "on_surface": "#dae2fd",
+        "on_surface_variant": "#c2c6d6",
+        "on_tertiary": "#131e8c",
+        "on_tertiary_container": "#081486",
+        "on_tertiary_fixed": "#000767",
+        "on_tertiary_fixed_variant": "#2f3aa3",
+        "outline": "#8c909f",
+        "outline_variant": "#424754",
+        "primary": "#adc6ff",
+        "primary_container": "#4d8eff",
+        "primary_fixed": "#d8e2ff",
+        "primary_fixed_dim": "#adc6ff",
+        "secondary": "#5de6ff",
+        "secondary_container": "#00cbe6",
+        "secondary_fixed": "#a2eeff",
+        "secondary_fixed_dim": "#2fd9f4",
+        "surface": "#0b1326",
+        "surface_bright": "#31394d",
+        "surface_container": "#171f33",
+        "surface_container_high": "#222a3d",
+        "surface_container_highest": "#2d3449",
+        "surface_container_low": "#131b2e",
+        "surface_container_lowest": "#060e20",
+        "surface_dim": "#0b1326",
+        "surface_tint": "#adc6ff",
+        "surface_variant": "#2d3449",
+        "tertiary": "#bdc2ff",
+        "tertiary_container": "#7c87f3",
+        "tertiary_fixed": "#e0e0ff",
+        "tertiary_fixed_dim": "#bdc2ff"
+      },
+      "overrideNeutralColor": "#0f172a",
+      "overridePrimaryColor": "#3b82f6",
+      "overrideSecondaryColor": "#22d3ee",
+      "overrideTertiaryColor": "#818cf8",
+      "roundness": "ROUND_EIGHT",
+      "spacing": {
+        "base": "4px",
+        "gutter": "20px",
+        "lg": "40px",
+        "margin-desktop": "80px",
+        "margin-mobile": "20px",
+        "md": "24px",
+        "sm": "16px",
+        "xl": "64px",
+        "xs": "8px"
+      },
+      "spacingScale": 2,
+      "typography": {
+        "body-lg": {
+          "fontFamily": "Geist",
+          "fontSize": "18px",
+          "fontWeight": "400",
+          "lineHeight": "1.6"
+        },
+        "body-md": {
+          "fontFamily": "Geist",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "1.6"
+        },
+        "display-xl": {
+          "fontFamily": "Geist",
+          "fontSize": "64px",
+          "fontWeight": "700",
+          "letterSpacing": "-0.04em",
+          "lineHeight": "1.1"
+        },
+        "headline-lg": {
+          "fontFamily": "Geist",
+          "fontSize": "40px",
+          "fontWeight": "600",
+          "letterSpacing": "-0.02em",
+          "lineHeight": "1.2"
+        },
+        "headline-lg-mobile": {
+          "fontFamily": "Geist",
+          "fontSize": "32px",
+          "fontWeight": "600",
+          "letterSpacing": "-0.02em",
+          "lineHeight": "1.2"
+        },
+        "headline-md": {
+          "fontFamily": "Geist",
+          "fontSize": "24px",
+          "fontWeight": "600",
+          "lineHeight": "1.3"
+        },
+        "label-md": {
+          "fontFamily": "Geist",
+          "fontSize": "14px",
+          "fontWeight": "500",
+          "letterSpacing": "0.05em",
+          "lineHeight": "1.2"
+        },
+        "label-sm": {
+          "fontFamily": "Geist",
+          "fontSize": "12px",
+          "fontWeight": "500",
+          "lineHeight": "1.2"
+        }
+      }
+    }
+  },
+  "name": "assets/22e74602a1da4d13ac710e5f1aa81c1b",
+  "version": "1"
+}

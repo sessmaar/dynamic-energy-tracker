@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trajectory - Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#adc6ff",
+                        "inverse-primary": "#adc6ff",
+                        "on-secondary-container": "#00616d",
+                        "on-surface-variant": "#414755",
+                        "secondary-fixed-dim": "#00daf3",
+                        "primary-fixed": "#d8e2ff",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#fefcff",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "tertiary": "#5d5c5b",
+                        "on-primary-fixed-variant": "#004493",
+                        "background": "#f7f9fb",
+                        "primary-container": "#0070eb",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001a41",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "tertiary-fixed": "#e5e2e1",
+                        "primary": "#0058bc",
+                        "on-tertiary-container": "#f7feff",
+                        "outline-variant": "#c1c6d7",
+                        "surface-dim": "#d8dadc",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "surface-tint": "#005bc1",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "surface-variant": "#e0e3e5",
+                        "inverse-on-surface": "#eff1f3",
+                        "outline": "#717786",
+                        "on-surface": "#191c1e",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "surface-container": "#eceef0",
+                        "secondary-container": "#00e3fd",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e6e8ea",
+                        "secondary-fixed": "#9cf0ff",
+                        "tertiary-container": "#767474",
+                        "secondary": "#006875",
+                        "on-secondary-fixed-variant": "#004f58",
+                        "on-secondary-fixed": "#001f24",
+                        "surface": "#f7f9fb",
+                        "surface-container-highest": "#e0e3e5",
+                        "inverse-surface": "#2d3133"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "container-max": "1280px",
+                        "margin-desktop": "40px",
+                        "unit": "4px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "label-sm": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "data-mono": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "data-mono": ["18px", { "lineHeight": "24px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; background-color: #f7f9fb; color: #191c1e; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid #E2E8F0;
+            box-shadow: 0px 8px 32px rgba(0, 122, 255, 0.02);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex bg-background min-h-screen">
+<!-- NavigationDrawer (Desktop) -->
+<nav class="bg-surface-dim/80 backdrop-blur-2xl h-screen w-72 rounded-r-xl border-r border-white/10 shadow-xl fixed left-0 top-0 z-40 hidden md:flex flex-col">
+<div class="p-6">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-variant flex-shrink-0">
+<img alt="Lionel Messi" class="w-full h-full object-cover" data-alt="A professional headshot of an athletic male, set against a clean, minimal white background. Soft, even studio lighting highlights the subject's features, emphasizing a sense of health and vitality suitable for a medical or sports analytics platform profile picture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMASK7BM8PlXNSIc_Q7bNR98wn5UerpcWnlrEq6eA4Q_R5UIrZ5N6wiU6tHZlIkxwpahZGyK03IMCArWLVG63LaL9k0l5FhIaDf9oWjHsef9M_q_z8HNixzdhhI5GvQaefI_ra_lEMZQsKVSjb18gmIhLunycHtwKIsGm1nYFvu-tsnzUp1tSjSkoI8cwWvZrm7oJruMehXUVOBH56NJDGXeB-UwsRuPvF8T_Qh9LqYJ9GpVaUyVcumkIZ2Hrr9vcJYcUcTrNQTEM"/>
+</div>
+<div>
+<h2 class="text-headline-md font-headline-md text-primary font-semibold">Lionel Messi</h2>
+<p class="text-label-md font-label-md text-on-surface-variant">Pro Athlete</p>
+<span class="text-xs text-secondary-container mt-1 block">Active</span>
+</div>
+</div>
+<ul class="space-y-2">
+<li><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors text-label-md font-label-md" href="#"><span class="material-symbols-outlined">grid_view</span>Dashboard</a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 rounded-r-lg bg-primary/20 text-primary border-l-4 border-primary text-label-md font-label-md transition-colors" href="#"><span class="material-symbols-outlined">insights</span>Analytics</a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors text-label-md font-label-md" href="#"><span class="material-symbols-outlined">calendar_today</span>Schedule</a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors text-label-md font-label-md" href="#"><span class="material-symbols-outlined">monitoring</span>Activity</a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors text-label-md font-label-md" href="#"><span class="material-symbols-outlined">groups</span>Community</a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors text-label-md font-label-md" href="#"><span class="material-symbols-outlined">settings</span>Settings</a></li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-72 flex flex-col min-h-screen">
+<!-- TopAppBar (Mobile) -->
+<header class="bg-surface/10 backdrop-blur-xl docked full-width top-0 bg-white/5 border-b border-white/10 shadow-[0_0_20px_rgba(173,198,255,0.1)] flex justify-between items-center w-full px-margin-mobile h-16 md:hidden sticky z-30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant">
+<img alt="Lionel Messi" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVAlEeVvbzSauiPoROgeTRoseuQMPN0RmWctKqJCXQCR9J8PRp3Q3dI9LOeuB1_Xa4hYKKq6FNUksr7Seltuc67943k8X3BgTmQYNcKcKg6cXJmcjAiatMXamGjQzB8O2QAU45p1LS9e0w0hw13siFc_Df4sr4effas6hyR8JcH9CoAZnxD8AfhQaCOQ3vjwsWd2VElFHaGMh8Z1CttlKh-ZszrQ2ckv80e4Iqi2yFoXhZEpRDOrOPsYcYo3jjq8m0AWVsu993PaQ"/>
+</div>
+<h1 class="text-headline-md font-headline-md font-extrabold text-primary">Trajectory</h1>
+</div>
+<button class="text-on-surface-variant hover:bg-white/10 transition-all p-2 rounded-full scale-95 duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Page Content -->
+<div class="p-4 md:p-8 max-w-[container-max] mx-auto w-full space-y-6 pb-24 md:pb-8">
+<div class="mb-8">
+<h1 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg-mobile md:font-headline-lg text-on-surface">Metabolic Trends</h1>
+<p class="text-body-md font-body-md text-outline mt-2">Precision analysis of your energy expenditure and weight trajectory.</p>
+</div>
+<!-- Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Hero Chart: Metabolic Trend -->
+<div class="md:col-span-8 glass-card rounded-xl p-6 flex flex-col h-96">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Weight Trajectory</h3>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-display-lg font-display-lg text-on-surface">76.4</span>
+<span class="text-body-md font-body-md text-outline">kg</span>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-primary/10 text-primary text-label-sm font-label-sm rounded-full">EWMA Smoothed</span>
+</div>
+</div>
+<div class="flex-1 relative border-l border-b border-surface-variant mt-4">
+<!-- Simulated Chart -->
+<div class="absolute bottom-0 left-0 w-full h-[60%] bg-gradient-to-t from-secondary-container/20 to-transparent"></div>
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<!-- Raw Data Points -->
+<circle cx="10" cy="80" fill="#c1c6d7" r="1.5"></circle>
+<circle cx="20" cy="75" fill="#c1c6d7" r="1.5"></circle>
+<circle cx="30" cy="85" fill="#c1c6d7" r="1.5"></circle>
+<circle cx="40" cy="65" fill="#c1c6d7" r="1.5"></circle>
+<circle cx="50" cy="70" fill="#c1c6d7" r="1.5"></circle>
+<circle cx="60" cy="55" fill="#c1c6d7" r="1.5"></circle>
+<circle cx="70" cy="60" fill="#c1c6d7" r="1.5"></circle>
+<circle cx="80" cy="45" fill="#c1c6d7" r="1.5"></circle>
+<circle cx="90" cy="50" fill="#c1c6d7" r="1.5"></circle>
+<!-- Confidence Interval -->
+<path d="M0,85 Q25,80 50,70 T100,50 L100,40 Q75,55 50,60 T0,75 Z" fill="rgba(0, 227, 253, 0.1)"></path>
+<!-- Trend Line -->
+<path d="M0,80 Q25,75 50,65 T100,45" fill="none" stroke="#0058bc" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+<div class="absolute bottom-0 w-full flex justify-between text-label-sm font-label-sm text-outline -mb-6">
+<span>4w ago</span>
+<span>Today</span>
+</div>
+</div>
+</div>
+<!-- Trajectory Velocity -->
+<div class="md:col-span-4 glass-card rounded-xl p-6 flex flex-col justify-between">
+<div>
+<h3 class="text-label-sm font-label-sm text-outline uppercase tracking-wider mb-2">Trajectory Velocity</h3>
+<div class="flex items-center gap-3">
+<span class="text-headline-lg font-headline-lg text-primary">-0.42</span>
+<span class="text-body-md font-body-md text-outline">kg/wk</span>
+</div>
+<p class="text-label-sm font-label-sm text-outline mt-1">Margin of Error: ±0.08 kg</p>
+</div>
+<div class="mt-8">
+<div class="flex justify-between text-label-sm font-label-sm mb-2">
+<span class="text-outline">Target: -0.50 kg/wk</span>
+<span class="text-secondary font-medium">On Track</span>
+</div>
+<div class="w-full h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container rounded-full" style="width: 84%;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="bg-surface-container/30 backdrop-blur-lg docked full-width bottom-0 rounded-t-xl border-t border-white/10 shadow-[0_-4px_24px_rgba(0,203,230,0.15)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 py-4 md:hidden">
+<a class="flex flex-col items-center justify-center text-outline opacity-60 hover:opacity-100 transition-opacity scale-110 active:scale-90 duration-300" href="#"><span class="material-symbols-outlined">home</span></a>
+<a class="flex flex-col items-center justify-center bg-secondary/20 text-secondary rounded-full p-3 shadow-[0_0_15px_rgba(0,203,230,0.3)] hover:opacity-100 transition-opacity scale-110 active:scale-90 duration-300" href="#"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">query_stats</span></a>
+<a class="flex flex-col items-center justify-center text-outline opacity-60 hover:opacity-100 transition-opacity scale-110 active:scale-90 duration-300" href="#"><span class="material-symbols-outlined">add_circle</span></a>
+<a class="flex flex-col items-center justify-center text-outline opacity-60 hover:opacity-100 transition-opacity scale-110 active:scale-90 duration-300" href="#"><span class="material-symbols-outlined">calendar_month</span></a>
+<a class="flex flex-col items-center justify-center text-outline opacity-60 hover:opacity-100 transition-opacity scale-110 active:scale-90 duration-300" href="#"><span class="material-symbols-outlined">person</span></a>
+</nav>
+</body></html>

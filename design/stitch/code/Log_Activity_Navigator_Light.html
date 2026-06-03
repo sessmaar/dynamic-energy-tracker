@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Log Activity - Dense Matrix</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#d8dadc",
+                      "surface-variant": "#e0e3e5",
+                      "surface-container-high": "#e6e8ea",
+                      "primary-fixed-dim": "#adc6ff",
+                      "on-surface": "#191c1e",
+                      "on-secondary-fixed-variant": "#004f58",
+                      "tertiary": "#5d5c5b",
+                      "outline": "#717786",
+                      "on-error-container": "#93000a",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed": "#001f24",
+                      "outline-variant": "#c1c6d7",
+                      "on-primary-container": "#fefcff",
+                      "surface-tint": "#005bc1",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#f2f4f6",
+                      "tertiary-fixed-dim": "#c8c6c5",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-primary-fixed-variant": "#004493",
+                      "primary-container": "#0070eb",
+                      "primary-fixed": "#d8e2ff",
+                      "on-tertiary-container": "#f7feff",
+                      "surface": "#f7f9fb",
+                      "on-surface-variant": "#414755",
+                      "background": "#f7f9fb",
+                      "on-tertiary-fixed": "#1c1b1b",
+                      "on-primary": "#ffffff",
+                      "inverse-primary": "#adc6ff",
+                      "inverse-on-surface": "#eff1f3",
+                      "primary": "#0058bc",
+                      "secondary-container": "#00e3fd",
+                      "secondary": "#006875",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container": "#eceef0",
+                      "secondary-fixed": "#9cf0ff",
+                      "tertiary-container": "#767474",
+                      "secondary-fixed-dim": "#00daf3",
+                      "on-error": "#ffffff",
+                      "on-background": "#191c1e",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-container": "#00616d",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#001a41",
+                      "inverse-surface": "#2d3133",
+                      "on-tertiary-fixed-variant": "#474646",
+                      "tertiary-fixed": "#e5e2e1",
+                      "surface-bright": "#f7f9fb"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "40px",
+                      "container-max": "1280px",
+                      "gutter": "24px",
+                      "unit": "4px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "data-mono": [
+                              "Geist"
+                      ],
+                      "display-lg": [
+                              "Geist"
+                      ],
+                      "label-sm": [
+                              "Geist"
+                      ],
+                      "headline-lg": [
+                              "Geist"
+                      ],
+                      "body-md": [
+                              "Geist"
+                      ],
+                      "headline-lg-mobile": [
+                              "Geist"
+                      ]
+              },
+              "fontSize": {
+                      "data-mono": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .activity-card.active {
+            border-color: theme('colors.primary');
+            background-color: theme('colors.primary-fixed');
+        }
+        .segment-btn.active {
+            background-color: theme('colors.on-surface');
+            color: theme('colors.on-primary');
+            border-color: theme('colors.on-surface');
+        }
+        
+        /* Ambient Blue Glow */
+        .ambient-glow::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-primary/20">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant bg-surface-container-high flex-shrink-0">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A minimalist, high-key headshot of a medical professional with neutral lighting. The background is a pristine, clinical white, perfectly matching a modern health technology aesthetic. The image exudes calm control and precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAIk7BJLly-GQ6z0vDo8wkRnd0WC9RzoRJao41F4blDarzpbKjvqysNkO2ytTtSBUC4DwnZFipoj9i_4xlN_f4bZ5p_b002yXFPCrnJ5vAHBWS_wEI6W2Rlm5k8VArAef5pFxcr3VBRkC7zNhxt5du5KXW2lqxSHjF9xQ_Oq6cWf9_bcKgZrC2JAePN5h5kApyoGFHtu0w2sxAcF_belYvJBsYRy8FKVeg8vKXLAnhmksyjNl_pG4-7O0HWGFBs8nA0bU8jp5Hn7Y"/>
+</div>
+<span class="font-display-lg text-headline-lg-mobile font-bold tracking-tight text-on-surface">Dense Matrix</span>
+</div>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity active:scale-95 flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 pt-24 pb-28 px-margin-mobile flex flex-col gap-6">
+<!-- Page Intent Header -->
+<div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-1">Log Activity</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Record your metabolic exertion.</p>
+</div>
+<!-- Search / Filter -->
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-3 border border-outline-variant rounded-lg leading-5 bg-surface-container-lowest text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-primary/5 transition-all duration-200 font-body-md text-body-md shadow-sm" placeholder="Search activities..." type="text"/>
+</div>
+<!-- Activity Catalog (Bento Grid) -->
+<section class="grid grid-cols-2 gap-3">
+<!-- Card 1 (Active State Demo) -->
+<button class="activity-card active p-4 rounded-xl border flex flex-col items-start gap-3 text-left transition-all duration-200 shadow-sm relative overflow-hidden" onclick="toggleActivity(this)">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<div>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface">Strength</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Anaerobic</p>
+</div>
+</button>
+<!-- Card 2 -->
+<button class="activity-card bg-surface-container-lowest border-outline-variant p-4 rounded-xl border flex flex-col items-start gap-3 text-left transition-all duration-200 hover:border-primary/50 shadow-sm" onclick="toggleActivity(this)">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface shadow-sm">
+<span class="material-symbols-outlined">directions_run</span>
+</div>
+<div>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface">HIIT</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">High Impact</p>
+</div>
+</button>
+<!-- Card 3 -->
+<button class="activity-card bg-surface-container-lowest border-outline-variant p-4 rounded-xl border flex flex-col items-start gap-3 text-left transition-all duration-200 hover:border-primary/50 shadow-sm" onclick="toggleActivity(this)">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface shadow-sm">
+<span class="material-symbols-outlined">pedal_bike</span>
+</div>
+<div>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface">Cycling</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Endurance</p>
+</div>
+</button>
+<!-- Card 4 -->
+<button class="activity-card bg-surface-container-lowest border-outline-variant p-4 rounded-xl border flex flex-col items-start gap-3 text-left transition-all duration-200 hover:border-primary/50 shadow-sm" onclick="toggleActivity(this)">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface shadow-sm">
+<span class="material-symbols-outlined">pool</span>
+</div>
+<div>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface">Swimming</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Low Impact</p>
+</div>
+</button>
+</section>
+<!-- Parameters Section -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm flex flex-col gap-5">
+<!-- Duration -->
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Duration (min)</span>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low" onclick="adjustValue('duration', -5)">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<input class="w-16 text-center font-data-mono text-data-mono text-on-surface bg-transparent border-b border-outline-variant focus:border-primary focus:ring-0 focus:outline-none p-1 appearance-none" id="duration" style="-moz-appearance: textfield;" type="number" value="45"/>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low" onclick="adjustValue('duration', 5)">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+<hr class="border-outline-variant/50"/>
+<!-- Intensity -->
+<div class="flex flex-col gap-3">
+<span class="font-body-md text-body-md text-on-surface-variant">Intensity Protocol</span>
+<div class="flex bg-surface-container-low p-1 rounded-lg border border-outline-variant/50">
+<button class="segment-btn flex-1 py-2 text-center rounded-md font-label-sm text-label-sm text-on-surface-variant transition-colors" onclick="setSegment(this)">Low</button>
+<button class="segment-btn active flex-1 py-2 text-center rounded-md font-label-sm text-label-sm text-on-surface transition-colors shadow-sm" onclick="setSegment(this)">Moderate</button>
+<button class="segment-btn flex-1 py-2 text-center rounded-md font-label-sm text-label-sm text-on-surface-variant transition-colors" onclick="setSegment(this)">High</button>
+</div>
+</div>
+</section>
+<!-- Energy Flux Preview (Glassmorphism + Ambient Depth) -->
+<section class="relative rounded-2xl border border-outline-variant bg-surface-container-lowest p-6 shadow-[0px_8px_32px_rgba(0,122,255,0.05)] overflow-hidden">
+<div class="absolute inset-0 opacity-10 bg-[linear-gradient(135deg,theme('colors.secondary-fixed')_0%,transparent_100%)]"></div>
+<div class="relative z-10 flex flex-col items-center text-center ambient-glow">
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase mb-2">Estimated Energy Flux</span>
+<div class="flex items-baseline gap-1">
+<span class="font-data-mono text-[42px] leading-[48px] font-bold tracking-tight text-on-surface">342</span>
+<span class="font-body-md text-body-md text-secondary font-medium">kcal</span>
+</div>
+<!-- Micro chart visualization -->
+<div class="w-full h-10 mt-4 flex items-end justify-between gap-1 px-4 opacity-70">
+<div class="w-full bg-primary/20 h-[20%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[40%] rounded-t-sm"></div>
+<div class="w-full bg-primary/60 h-[70%] rounded-t-sm"></div>
+<div class="w-full bg-secondary h-[100%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[50%] rounded-t-sm"></div>
+<div class="w-full bg-primary/20 h-[30%] rounded-t-sm"></div>
+</div>
+</div>
+</section>
+<!-- Primary Action -->
+<button class="w-full bg-on-surface text-on-primary py-4 rounded-xl font-headline-lg-mobile text-[18px] font-semibold tracking-wide hover:opacity-90 active:scale-95 transition-all shadow-md mt-2 flex justify-center items-center gap-2">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            Commit Entry
+        </button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile pb-safe h-20 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/30 shadow-[0px_-8px_32px_rgba(0,122,255,0.05)]">
+<!-- Command (Active - Represents Logging/Action) -->
+<a class="flex flex-col items-center justify-center text-secondary font-bold active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]" style="font-variation-settings: 'FILL' 1;">terminal</span>
+<span class="font-label-sm text-label-sm">Command</span>
+</a>
+<!-- Trends (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-secondary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">insights</span>
+<span class="font-label-sm text-label-sm">Trends</span>
+</a>
+<!-- Converge (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-secondary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">hub</span>
+<span class="font-label-sm text-label-sm">Converge</span>
+</a>
+<!-- Settings (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-secondary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</nav>
+<!-- Inline JS for micro-interactions -->
+<script>
+        // Activity Card Toggle
+        function toggleActivity(element) {
+            document.querySelectorAll('.activity-card').forEach(card => {
+                card.classList.remove('active', 'border-primary', 'bg-primary-fixed');
+                card.classList.add('bg-surface-container-lowest', 'border-outline-variant');
+                // Reset icon fill
+                let icon = card.querySelector('.material-symbols-outlined');
+                icon.style.fontVariationSettings = "'FILL' 0";
+                icon.parentElement.classList.remove('text-primary');
+                icon.parentElement.classList.add('text-on-surface');
+            });
+            
+            element.classList.add('active');
+            element.classList.remove('bg-surface-container-lowest', 'border-outline-variant');
+            
+            let icon = element.querySelector('.material-symbols-outlined');
+            icon.style.fontVariationSettings = "'FILL' 1";
+            icon.parentElement.classList.remove('text-on-surface');
+            icon.parentElement.classList.add('text-primary');
+            
+            animateValue();
+        }
+
+        // Intensity Segment Toggle
+        function setSegment(element) {
+            document.querySelectorAll('.segment-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-on-surface', 'text-on-primary', 'shadow-sm');
+                btn.classList.add('text-on-surface-variant');
+            });
+            element.classList.add('active', 'bg-on-surface', 'text-on-primary', 'shadow-sm');
+            element.classList.remove('text-on-surface-variant');
+            animateValue();
+        }
+
+        // Adjust Duration
+        function adjustValue(id, amount) {
+            const input = document.getElementById(id);
+            let val = parseInt(input.value) + amount;
+            if(val < 5) val = 5;
+            input.value = val;
+            animateValue();
+        }
+
+        // Simulate Energy Flux calculation recalculation
+        function animateValue() {
+            const display = document.querySelector('.font-data-mono.text-\\[42px\\]');
+            const current = parseInt(display.innerText);
+            const target = current + Math.floor(Math.random() * 50) - 15; // Random fluctuation for demo
+            
+            display.style.opacity = '0.5';
+            setTimeout(() => {
+                display.innerText = target > 50 ? target : 120; // Keep reasonable
+                display.style.opacity = '1';
+                display.style.transform = 'scale(1.05)';
+                setTimeout(() => display.style.transform = 'scale(1)', 150);
+            }, 150);
+        }
+    </script>
+</body></html>

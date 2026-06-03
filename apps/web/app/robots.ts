@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/dashboard/',
     },
-    sitemap: 'https://dense-matrix.vercel.app/sitemap.xml',
+    sitemap: 'https://dynamic-energy-tracker-web.vercel.app/sitemap.xml',
   };
 }

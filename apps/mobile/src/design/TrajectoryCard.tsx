@@ -95,6 +95,17 @@ export const TrajectoryCard = ({ verdict, analysis }: TrajectoryCardProps) => {
           <Text variant="num">±{analysis.residualSDKg.toFixed(2)} kg</Text>
         </View>
       </View>
+
+      {analysis.transientWaterKg > 0.3 && (
+        <View style={{
+          marginTop: gap.xs, padding: gap.sm, backgroundColor: colors.accentSoft,
+          borderRadius: 2, borderWidth: hairline.width, borderColor: colors.accent,
+        }}>
+          <Text variant="meta" color={colors.accent} style={{ fontSize: 10 }}>
+            WATER FLUX · ~{analysis.transientWaterKg.toFixed(2)} KG transient mass detected from recent carbs
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

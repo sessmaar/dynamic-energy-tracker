@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Platform, Pressable, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import { cmToFtIn, ftInToCm, kgToLb, lbToKg } from "@dynamic-energy/engine";
+import {
+  ACTIVITY_LEVELS, type ActivityLevel, DEFAULT_ACTIVITY_LEVEL,
+  clampGoalToSafety, cmToFtIn, ftInToCm, kgToLb, lbToKg,
+} from "@dynamic-energy/engine";
 import { Button, Card, Screen, Text, colors, fonts, fontSize, gap, hairline, radius } from "@/design";
 import { haptic } from "@/lib/haptics";
 import { useEngine } from "@/store/engineStore";
@@ -57,6 +60,42 @@ const Segment = <T extends string>({
   </View>
 );
 
+/**
+ * Lifestyle picker. Each tier maps to a published Physical Activity Level
+ * (PAL) multiplier; the engine seeds the cold-start TDEE as BMR × that
+ * factor, then tunes it from logs each Monday. Five tiers, stacked so the
+ * one-line description for each is readable.
+ */
+const ActivityPicker = ({
+  value, onChange,
+}: { value: ActivityLevel; onChange: (v: ActivityLevel) => void }) => (
+  <View style={{ borderWidth: hairline.width, borderColor: hairline.color, borderRadius: radius.sharp }}>
+    {ACTIVITY_LEVELS.map((o, i) => {
+      const active = o.key === value;
+      return (
+        <Pressable
+          key={o.key}
+          onPress={() => { haptic.light(); onChange(o.key); }}
+          style={{
+            paddingVertical: gap.md, paddingHorizontal: gap.md,
+            backgroundColor: active ? colors.accentSoft : "transparent",
+            borderTopWidth: i === 0 ? 0 : hairline.width, borderTopColor: hairline.color,
+            flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: gap.md,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text variant="meta" color={active ? colors.accent : colors.fg}>{o.label}</Text>
+            <Text variant="meta" color={colors.muted}>{o.detail}</Text>
+          </View>
+          <Text variant="num" color={active ? colors.accent : colors.muted} style={{ fontSize: 13 }}>
+            ×{o.factor.toFixed(3).replace(/0+$/, "").replace(/\.$/, "")}
+          </Text>
+        </Pressable>
+      );
+    })}
+  </View>
+);
+
 const toIsoDate = (d: Date): string => d.toISOString().slice(0, 10);
 
 export default function Onboarding() {
@@ -74,6 +113,7 @@ export default function Onboarding() {
   const [heightCm, setHeightCm] = useState("180");
   const [weightKg, setWeightKg] = useState("80");
 
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>(DEFAULT_ACTIVITY_LEVEL);
   const [goalType, setGoalType] = useState<"cut" | "maintain" | "gain">("cut");
   const [rate, setRate] = useState("0.5");
   const [committing, setCommitting] = useState(false);
@@ -100,15 +140,27 @@ export default function Onboarding() {
     setCommitting(true);
     setError(null);
     try {
+      const rawGoal =
+        goalType === "maintain" ? 0
+        : goalType === "cut" ? -Math.abs(Number(rate))
+        : Math.abs(Number(rate));
+
+      const safeGoal = clampGoalToSafety(rawGoal, weightNum);
+      
+      if (rawGoal !== safeGoal) {
+        setCommitting(false);
+        setError(`Goal rate is outside safe limits. Maximum for your mass is ${Math.abs(safeGoal).toFixed(2)} kg/wk.`);
+        haptic.error();
+        return;
+      }
+
       await setProfile({
         sex,
         dateOfBirth: toIsoDate(dob),
         heightCm: heightNum,
         initialWeightKg: weightNum,
-        goalKgPerWeek:
-          goalType === "maintain" ? 0
-          : goalType === "cut" ? -Math.abs(Number(rate))
-          : Math.abs(Number(rate)),
+        activityLevel,
+        goalKgPerWeek: safeGoal,
         timezone: deviceTimezone,
       });
       haptic.success();
@@ -241,6 +293,18 @@ export default function Onboarding() {
             <Text variant="meta">Timezone · Auto-Detected</Text>
             <Text variant="num" style={{ fontSize: 14 }}>{deviceTimezone}</Text>
           </View>
+        </View>
+      </Card>
+
+      <Card>
+        <View style={{ gap: gap.md }}>
+          <View style={{ gap: gap.xs }}>
+            <Text variant="meta">Baseline · Activity Level</Text>
+            <Text variant="meta" color={colors.muted}>
+              Your typical week. Sets the starting expenditure estimate; the engine refines it from your logs.
+            </Text>
+          </View>
+          <ActivityPicker value={activityLevel} onChange={setActivityLevel} />
         </View>
       </Card>
 

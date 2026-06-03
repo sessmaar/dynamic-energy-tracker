@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  type IntakeEntry, type KcalDay, type WeeklyTdeeResult, type WeightEntry,
-  computeWeeklyTdee, dailyTargetFromTdee, ewmaTrend, isoDate, kcalDay, kg,
-  mifflinStJeor, updateTdeePosterior, years, cm,
+  type ActivityLevel, type Composition, type IntakeEntry, type KcalDay,
+  type WeeklyTdeeResult, type WeightEntry,
+  computeWeeklyTdee, dailyTargetFromTdee, ewmaTrend, isoDate, latestTrendWeight,
+  resolveComposition, seedTdee, unit, updateTdeePosterior, years, cm,
 } from "@dynamic-energy/engine";
+import type { BodyMeasurement } from "@dynamic-energy/data";
 import { LineChart } from "@/components/LineChart";
 import { Runway } from "@/components/Runway";
 import { pct, round0, round1, signed } from "@/lib/format";
@@ -49,7 +51,7 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
   const router = useRouter();
   const [state, setState] = useState<
     | { kind: "loading" }
-    | { kind: "ready"; weights: WeightEntry[]; intake: IntakeEntry[]; profile: { heightCm: number; age: number; sex: "male" | "female" } | null; goalKgPerWeek: number }
+    | { kind: "ready"; weights: WeightEntry[]; intake: IntakeEntry[]; profile: { heightCm: number; age: number; sex: "male" | "female" } | null; activityLevel: ActivityLevel; latestMeasurement: BodyMeasurement | null; goalKgPerWeek: number }
     | { kind: "empty" }
     | { kind: "error"; message: string }
   >({ kind: "loading" });
@@ -62,13 +64,14 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
           d.setUTCDate(d.getUTCDate() - 90);
           return isoDate(d.toISOString().slice(0, 10));
         })();
-        const [profile, goal, weights, intake] = await Promise.all([
-          repos.profile.get(userId),
+        const [account, goal, weights, intake, latestMeasurement] = await Promise.all([
+          repos.profile.getAccount(userId),
           repos.goal.getActive(userId),
           repos.weight.listSince(userId, since),
           repos.intake.listSince(userId, since),
+          repos.bodyMeasurement.latest(userId),
         ]);
-        if (!profile || weights.length === 0) {
+        if (!account || weights.length === 0) {
           setState({ kind: "empty" });
           return;
         }
@@ -76,7 +79,13 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
           kind: "ready",
           weights,
           intake,
-          profile: { heightCm: profile.heightCm, age: profile.age, sex: profile.sex },
+          profile: {
+            heightCm: account.profile.heightCm,
+            age: account.profile.age,
+            sex: account.profile.sex,
+          },
+          activityLevel: account.activityLevel,
+          latestMeasurement,
           goalKgPerWeek: goal?.kgPerWeek ?? 0,
         });
       } catch (e) {
@@ -98,7 +107,23 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
   const startDate = state.weights[0]!.date;
   const endDate = state.weights[state.weights.length - 1]!.date;
 
-  const seedTdee = kcalDay(mifflinStJeor(profile, state.weights[state.weights.length - 1]!.weight) * 1.4);
+  // Resolve the latest body-composition assessment against current trend
+  // weight; when present, seedTdee uses Katch–McArdle instead of Mifflin.
+  const trendWeight = latestTrendWeight(state.weights) ?? state.weights[state.weights.length - 1]!.weight;
+  const m = state.latestMeasurement;
+  const composition: Composition | null = m
+    ? resolveComposition({
+        sex: profile.sex,
+        heightCm: profile.heightCm,
+        weightKg: trendWeight,
+        neckCm: m.neckCm != null ? cm(m.neckCm) : undefined,
+        waistCm: m.waistCm != null ? cm(m.waistCm) : undefined,
+        hipCm: m.hipCm != null ? cm(m.hipCm) : undefined,
+        directBodyFatPct: m.bodyFatPct != null ? unit(m.bodyFatPct) : undefined,
+      })
+    : null;
+
+  const seedPrior = seedTdee(profile, state.weights[state.weights.length - 1]!.weight, state.activityLevel, composition);
   const windows = mondayWindows(startDate, endDate);
   const history: Array<{
     week: { start: string; end: string };
@@ -106,14 +131,14 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
     posterior: KcalDay;
     alpha: number;
   }> = [];
-  let prior = seedTdee;
+  let prior = seedPrior;
   for (const w of windows) {
     const result = computeWeeklyTdee(isoDate(w.start), isoDate(w.end), state.intake, state.weights);
     const u = updateTdeePosterior(prior, result);
     history.push({ week: w, result, posterior: u.posterior, alpha: u.alpha });
     prior = u.posterior;
   }
-  const currentTdee = history[history.length - 1]?.posterior ?? seedTdee;
+  const currentTdee = history[history.length - 1]?.posterior ?? seedPrior;
   const target = dailyTargetFromTdee(currentTdee, { kgPerWeek: state.goalKgPerWeek });
 
   const trend = ewmaTrend(state.weights);
@@ -130,6 +155,8 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
   const weightTrend = trend.map((t, i) => ({
     x: i / Math.max(trend.length - 1, 1), y: t.trend,
   }));
+
+  const convergence = getConvergenceStatus(state.intake, state.weights, state.profile!.timezone);
 
   return (
     <>
@@ -160,6 +187,11 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
             <span className="meta">Window · {startDate} → {endDate}</span>
             <div className="num bignum" style={{ color: "var(--accent)", marginTop: 8 }}>{round0(currentTdee)}</div>
             <span className="meta">Inferred TDEE · KCAL/D</span>
+            <div className="meta" style={{ marginTop: 4, color: "var(--muted)" }}>
+              {convergence.isConverged
+                ? "Bayesian flux stable."
+                : `Tuning: ${convergence.daysRemaining} days until ${convergence.nextAlpha} alpha`}
+            </div>
           </div>
         </div>
 
@@ -179,6 +211,25 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
             </div>
           </div>
         </div>
+
+        {composition && (
+          <div className="card card-lg" style={{ marginBottom: "var(--gap-lg)" }}>
+            <div className="row between" style={{ marginBottom: "var(--gap-md)" }}>
+              <span className="meta">Body Composition · {m!.bodyFatPct != null ? "Measured" : "Navy Estimate"}</span>
+              <span className="meta">RMR · Katch–McArdle</span>
+            </div>
+            <div className="row between" style={{ alignItems: "flex-end" }}>
+              <div>
+                <span className="meta">Body Fat</span>
+                <div className="bignum" style={{ color: "var(--accent)" }}>{round1(composition.bodyFatPct * 100)}%</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span className="meta">Lean Mass</span>
+                <div className="num" style={{ fontSize: 24, fontWeight: 700 }}>{round1(composition.leanMassKg)} kg</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {history.length > 0 && (
           <section className="card card-lg" style={{ marginBottom: "var(--gap-lg)" }}>
@@ -241,6 +292,42 @@ const mondayWindows = (startIso: string, endIso: string) => {
     start.setUTCDate(start.getUTCDate() + 7);
   }
   return out;
+};
+
+const getConvergenceStatus = (intake: IntakeEntry[], weights: WeightEntry[], timezone: string) => {
+  const today = new Date().toLocaleString("en-US", { timeZone: timezone }).split(',')[0];
+  const [m, d, y] = today.split('/');
+  const todayIso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  
+  const start = new Date(`${todayIso}T00:00:00Z`);
+  const day = start.getUTCDay();
+  const delta = day === 0 ? 6 : day - 1;
+  start.setUTCDate(start.getUTCDate() - delta);
+  const weekStart = start.toISOString().slice(0, 10);
+
+  const intakeInWeek = intake.filter((i) => i.date >= weekStart && i.date <= todayIso);
+  const weightsInWeek = weights.filter((w) => w.date >= weekStart && w.date <= todayIso);
+
+  const intakeDates = new Set(intakeInWeek.map((i) => i.date));
+  const weightDates = new Set(weightsInWeek.map((w) => w.date));
+  let daysWithBoth = 0;
+  for (const date of intakeDates) if (weightDates.has(date)) daysWithBoth++;
+
+  const currentAlpha = daysWithBoth >= 5 ? 0.6 : daysWithBoth >= 3 ? 0.4 : 0;
+  const isConverged = currentAlpha >= 0.6;
+
+  let daysRemaining = 0;
+  let nextAlpha = currentAlpha;
+
+  if (daysWithBoth < 3) {
+    daysRemaining = 3 - daysWithBoth;
+    nextAlpha = 0.4;
+  } else if (daysWithBoth < 5) {
+    daysRemaining = 5 - daysWithBoth;
+    nextAlpha = 0.6;
+  }
+
+  return { daysRemaining, currentAlpha, nextAlpha, isConverged };
 };
 
 const signOutAndGo = async (router: ReturnType<typeof useRouter>) => {

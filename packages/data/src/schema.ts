@@ -10,6 +10,7 @@
  */
 
 export type Sex = "male" | "female";
+export type ActivityLevel = "sedentary" | "light" | "moderate" | "very" | "extra";
 export type GoalType = "cut" | "maintain" | "gain";
 export type GoalStatus = "active" | "paused" | "completed";
 export type WeightSource = "manual" | "healthkit" | "import";
@@ -22,6 +23,7 @@ export interface ProfileRow {
   initial_weight_kg: number;
   timezone: string;
   preferred_units: "metric" | "imperial";
+  activity_level: ActivityLevel;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +48,36 @@ export interface WeightEntryRow {
   date: string;
   weight_kg: number;
   source: WeightSource;
+  note: string | null;
+  created_at: string;
+}
+
+/**
+ * One body-composition assessment. Circumferences are nullable because a
+ * row may carry only a directly-measured `body_fat_pct` (from DEXA / smart
+ * scale / import) instead of tape inputs, or vice versa. See migration
+ * 0007. `body_fat_pct` is a 0..1 fraction.
+ */
+export interface BodyMeasurementRow {
+  id: string;
+  user_id: string;
+  date: string;
+  neck_cm: number | null;
+  waist_cm: number | null;
+  hip_cm: number | null;
+  weight_kg: number | null;
+  body_fat_pct: number | null;
+  source: WeightSource;
+  note: string | null;
+  created_at: string;
+}
+
+/** Pointer to a progress photo in the private `progress-photos` bucket. */
+export interface ProgressPhotoRow {
+  id: string;
+  user_id: string;
+  date: string;
+  storage_path: string;
   note: string | null;
   created_at: string;
 }

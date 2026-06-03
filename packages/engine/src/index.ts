@@ -6,6 +6,16 @@ export {
 } from "./units";
 export { mifflinStJeor } from "./bmr";
 export {
+  type Composition, type CompositionInputs,
+  navyBodyFatPct, leanMass, katchMcArdle, compositionFrom, resolveComposition,
+} from "./bodyComposition";
+export { restingEnergy } from "./restingEnergy";
+export {
+  type ActivityLevel,
+  PAL_FACTORS, ACTIVITY_LEVELS, DEFAULT_ACTIVITY_LEVEL,
+  palFactor, seedTdee,
+} from "./activityLevel";
+export {
   ACTIVITY_CATALOG, type ActivityKey,
   metFor, activeCalories, totalActiveCalories,
 } from "./met";

@@ -31,7 +31,8 @@ const indexBy = <T extends { readonly date: IsoDate }>(rows: readonly T[]): Map<
  *   TDEE ≈ (Σ intake − k · Δweight) / n
  *
  * where `Δweight` is the *signed* trend-weight change (start → end, so
- * negative when losing) and `k = 7700 kcal/kg`. The minus sign follows
+ * negative when losing) and `k = KCAL_PER_KG_BODY_MASS` (centralized
+ * in types.ts; 6200 kcal/kg per 2025 mixed-flux research). The minus
  * from energy balance: `intake − TDEE = k·Δweight`, so a drop in weight
  * (Δw < 0) implies TDEE > intake. The PRD wrote `+ k·Δw`, which only
  * works if Δw is redefined as *mass burned*; we keep Δw as the literal

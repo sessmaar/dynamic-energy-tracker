@@ -1,14 +1,17 @@
 import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
+  KCAL_PER_G_PROTEIN, KCAL_PER_G_CARB, KCAL_PER_G_FAT,
+} from "@dynamic-energy/engine";
+import {
   Card, MacroBar, Runway, Screen, Sparkline, TelemetryCell, TelemetryGrid, Text,
   TrajectoryCard,
   colors, fonts, fontSize, gap, hairline, radius,
 } from "@/design";
 import { useAuth } from "@/context/auth";
 import {
-  selectBmr, selectDailyTarget, selectTodayActiveCalories, selectTodayIntake,
-  selectTodayMacros, selectTrajectory, useEngine,
+  selectBmr, selectComposition, selectDailyTarget, selectTodayActiveCalories, selectTodayIntake,
+  selectTodayMacros, selectTrajectory, selectConvergenceStatus, useEngine,
 } from "@/store/engineStore";
 
 const LogTile = ({
@@ -51,9 +54,19 @@ export default function Command() {
   const macroTargets = useEngine((s) => s.macroTargets);
   const todayMacros = useEngine(selectTodayMacros);
   const trajectory = useEngine(selectTrajectory);
+  const composition = useEngine(selectComposition);
+  const convergence = useEngine(selectConvergenceStatus);
 
   const fillFraction = target ? Math.min(intakeToday / target, 1.2) : 0;
   const net = target ? intakeToday - target : 0;
+
+  // Energy Integrity Check
+  const theoreticalKcal =
+    todayMacros.proteinG * KCAL_PER_G_PROTEIN +
+    todayMacros.carbsG * KCAL_PER_G_CARB +
+    todayMacros.fatG * KCAL_PER_G_FAT;
+  const energyDrift = Math.abs(theoreticalKcal - intakeToday);
+  const showDrift = intakeToday > 0 && energyDrift > 50;
 
   return (
     <Screen
@@ -70,9 +83,16 @@ export default function Command() {
       <Card>
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: gap.lg }}>
           <Text variant="meta">Energy Flux Runway</Text>
-          <Text variant="num" style={{ fontSize: fontSize.small, color: net <= 0 ? colors.accent : colors.fg }}>
-            {net > 0 ? "+" : ""}{Math.round(net)} <Text variant="meta">NET</Text>
-          </Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text variant="num" style={{ fontSize: fontSize.small, color: net <= 0 ? colors.accent : colors.fg }}>
+              {net > 0 ? "+" : ""}{Math.round(net)} <Text variant="meta">NET</Text>
+            </Text>
+            {showDrift && (
+              <Text variant="meta" color={colors.accent} style={{ fontSize: 9 }}>
+                DRIFT: {Math.round(theoreticalKcal - intakeToday)} KCAL
+              </Text>
+            )}
+          </View>
         </View>
 
         <Runway fillFraction={fillFraction} targetFraction={1.0} />
@@ -96,7 +116,7 @@ export default function Command() {
         <Text variant="meta">Metabolic Telemetry // Live Stream</Text>
         <TelemetryGrid>
           <TelemetryCell>
-            <Text variant="meta">Current BMR</Text>
+            <Text variant="meta">{composition ? "RMR · Katch–McArdle" : "Current BMR"}</Text>
             <Text variant="num" style={{ fontSize: 18, fontWeight: "700" as const }}>
               {fmt(bmr)} <Text variant="meta">KCAL/D</Text>
             </Text>
@@ -118,11 +138,31 @@ export default function Command() {
             </View>
             <View style={{ height: hairline.width, backgroundColor: colors.border, marginVertical: gap.sm }} />
             <Text variant="body" color={colors.muted} style={{ fontSize: 12 }}>
-              {tdee
+              {convergence?.isConverged
                 ? "Bayesian flux stable. Re-evaluate at Monday check-in."
-                : "Awaiting baseline. Complete onboarding to seed the engine."}
+                : convergence
+                  ? `Tuning engine: ${convergence.daysRemaining} days of data until ${convergence.nextAlpha} alpha.`
+                  : "Awaiting baseline. Complete onboarding to seed the engine."}
             </Text>
           </TelemetryCell>
+          {composition && (
+            <TelemetryCell span={2}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                <View style={{ gap: gap.xs }}>
+                  <Text variant="meta">Body Fat</Text>
+                  <Text variant="num" color={colors.accent} style={{ fontSize: 18, fontWeight: "700" as const }}>
+                    {(composition.bodyFatPct * 100).toFixed(1)}<Text variant="meta" color={colors.accent}>%</Text>
+                  </Text>
+                </View>
+                <View style={{ gap: gap.xs, alignItems: "flex-end" }}>
+                  <Text variant="meta">Lean Mass</Text>
+                  <Text variant="num" style={{ fontSize: 18, fontWeight: "700" as const }}>
+                    {composition.leanMassKg.toFixed(1)} <Text variant="meta">KG</Text>
+                  </Text>
+                </View>
+              </View>
+            </TelemetryCell>
+          )}
         </TelemetryGrid>
       </View>
 
@@ -223,6 +263,7 @@ export default function Command() {
           <LogTile label="Fuel"     onPress={() => router.push("/log-meal")} active />
           <LogTile label="Mass"     onPress={() => router.push("/log-mass")} />
           <LogTile label="Activity" onPress={() => router.push("/log-activity")} />
+          <LogTile label="Body"     onPress={() => router.push("/log-composition")} />
         </View>
       </View>
 

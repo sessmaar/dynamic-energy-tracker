@@ -63,11 +63,23 @@ export const isoDate = (s: string): IsoDate => {
 };
 
 /**
- * Energy content of 1 kg of body-mass change. The classic 7700 kcal/kg
- * figure assumes fat-only flux; it is a rough planning constant, not a
- * physiological law. Centralized here so every module agrees.
+ * Energy density constants (kcal per kg).
+ *
+ * Adipose (7700) is the old standard. 2024-2025 research (Hall et al.)
+ * suggests total body mass flux follows a mixed density due to lean mass
+ * loss (~25 % lean loss "Quarter FFM Rule" in standard dieting).
  */
-export const KCAL_PER_KG_BODY_MASS = 7700;
+export const KCAL_PER_KG_ADIPOSE = 7700;
+
+/**
+ * Default mixed-flux density (assuming ~25 % lean loss).
+ * Calculated as: 0.75 * 7700 + 0.25 * 1100 ≈ 6050.
+ * We use 6200 as a conservative evidence-based midpoint for tracking.
+ */
+export const KCAL_PER_KG_MIXED_FLUX = 6200;
+
+/** Default fallback if no specific context is available. */
+export const KCAL_PER_KG_BODY_MASS = KCAL_PER_KG_MIXED_FLUX;
 
 export interface UserProfile {
   readonly sex: Sex;

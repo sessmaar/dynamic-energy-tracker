@@ -4,8 +4,8 @@ import {
   cm, isoDate, kcal, kg, met, minutes, years,
 } from "@dynamic-energy/engine";
 import type {
-  ActivityBlockRow, DailyIntakeRow, FoodRow, GoalRow, MealItemRow, MealRow,
-  ProfileRow, RecipeItemRow, RecipeRow, WeightEntryRow,
+  ActivityBlockRow, ActivityLevel, BodyMeasurementRow, DailyIntakeRow, FoodRow, GoalRow,
+  MealItemRow, MealRow, ProfileRow, ProgressPhotoRow, RecipeItemRow, RecipeRow, WeightEntryRow,
 } from "./schema";
 
 /**
@@ -47,6 +47,7 @@ export interface AccountProfile {
   timezone: string;
   initialWeightKg: number;
   preferredUnits: "metric" | "imperial";
+  activityLevel: ActivityLevel;
 }
 
 export const accountFromRow = (row: ProfileRow): AccountProfile => ({
@@ -55,6 +56,7 @@ export const accountFromRow = (row: ProfileRow): AccountProfile => ({
   timezone: row.timezone,
   initialWeightKg: row.initial_weight_kg,
   preferredUnits: row.preferred_units,
+  activityLevel: row.activity_level,
 });
 
 export const goalFromRow = (row: GoalRow): WeeklyGoal => ({
@@ -206,6 +208,48 @@ export const activityFromRow = (row: ActivityBlockRow): ActivityBlock => ({
   date: isoDate(row.date),
   met: met(row.met_value),
   durationMinutes: minutes(row.duration_min),
+});
+
+/**
+ * Domain view of a body-composition assessment. Raw inputs only — turning
+ * circumferences into %BF/lean mass needs the user's sex + height, so that
+ * resolution happens in the store/dashboard via the engine's
+ * `resolveComposition`, not here. `bodyFatPct` is a 0..1 fraction.
+ */
+export interface BodyMeasurement {
+  id: string;
+  date: string;
+  neckCm: number | null;
+  waistCm: number | null;
+  hipCm: number | null;
+  weightKg: number | null;
+  bodyFatPct: number | null;
+  note: string | null;
+}
+
+export const bodyMeasurementFromRow = (row: BodyMeasurementRow): BodyMeasurement => ({
+  id: row.id,
+  date: row.date,
+  neckCm: row.neck_cm,
+  waistCm: row.waist_cm,
+  hipCm: row.hip_cm,
+  weightKg: row.weight_kg,
+  bodyFatPct: row.body_fat_pct,
+  note: row.note,
+});
+
+export interface ProgressPhoto {
+  id: string;
+  date: string;
+  storagePath: string;
+  note: string | null;
+}
+
+export const progressPhotoFromRow = (row: ProgressPhotoRow): ProgressPhoto => ({
+  id: row.id,
+  date: row.date,
+  storagePath: row.storage_path,
+  note: row.note,
 });
 
 // Inverse direction lives in the repository layer — each `*.log()` or

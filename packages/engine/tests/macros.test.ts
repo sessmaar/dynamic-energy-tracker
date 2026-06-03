@@ -24,6 +24,20 @@ describe("computeMacroTargets", () => {
     expect(t.carbsG).toBe(0);
   });
 
+  it("scales protein by lean mass when provided", () => {
+    // 100 kg total, 80 kg lean.
+    // Default multiplier for lean mass is 2.2 g/kg.
+    // protein = 80 * 2.2 = 176g.
+    const t = computeMacroTargets(2000, kg(100), { leanMassKg: kg(80) });
+    expect(t.proteinG).toBe(176);
+  });
+
+  it("uses custom protein multiplier with lean mass", () => {
+    // 80 kg lean * 2.5 g/kg = 200g.
+    const t = computeMacroTargets(2000, kg(100), { leanMassKg: kg(80), proteinPerKg: 2.5 });
+    expect(t.proteinG).toBe(200);
+  });
+
   it("rejects invalid fatPct", () => {
     expect(() => computeMacroTargets(2000, kg(80), { fatPct: 1.5 })).toThrow(RangeError);
     expect(() => computeMacroTargets(2000, kg(80), { fatPct: -0.1 })).toThrow(RangeError);

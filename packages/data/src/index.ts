@@ -4,6 +4,8 @@ export {
   profileFromRow, accountFromRow, type AccountProfile,
   goalFromRow, goalWithMacrosFromRow, type GoalWithMacros,
   weightFromRow, intakeFromRow, activityFromRow,
+  bodyMeasurementFromRow, type BodyMeasurement,
+  progressPhotoFromRow, type ProgressPhoto,
   foodFromRow, mealItemFromRow, mealFromRow,
   recipeItemFromRow, recipeFromRow,
   type FoodSummary, type MealItemSummary, type MealSummary,
@@ -11,6 +13,7 @@ export {
 } from "./mappers";
 export {
   profileRepo, goalRepo, weightRepo, intakeRepo, activityRepo, engineStateRepo,
+  bodyMeasurementRepo, progressPhotoRepo,
   foodRepo, mealRepo, recipeRepo,
   computeMealItemNutrition, type NewMealItem,
   repositories, type Repositories,
@@ -22,4 +25,5 @@ export {
 export {
   parseMfpCsv, parseCsvLine, parseMfpDate,
   type ImportPreview, type ImportedMealItem, type ImportedWeightEntry,
+  type ImportedBodyMeasurement,
 } from "./importers/myfitnesspal";

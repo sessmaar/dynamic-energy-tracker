@@ -1,28 +1,64 @@
 import { describe, expect, it } from "vitest";
 import {
-  activityFromRow, goalFromRow, intakeFromRow, profileFromRow, weightFromRow,
+  accountFromRow, activityFromRow, bodyMeasurementFromRow, goalFromRow, intakeFromRow,
+  profileFromRow, progressPhotoFromRow, weightFromRow,
 } from "../src/mappers";
+
+const PROFILE_ROW = {
+  id: "u1",
+  sex: "male",
+  date_of_birth: "1990-01-01",
+  height_cm: 180,
+  initial_weight_kg: 80,
+  timezone: "UTC",
+  preferred_units: "metric",
+  activity_level: "very",
+  created_at: "2026-01-01T00:00:00Z",
+  updated_at: "2026-01-01T00:00:00Z",
+} as const;
 
 describe("profileFromRow", () => {
   it("derives age from DOB at a fixed reference date", () => {
     // Real wall-clock would make this flaky; mappers use system time. To
     // assert behavior precisely we'd need to inject a clock. For now,
     // assert age is non-negative and inside a sane window.
-    const p = profileFromRow({
-      id: "u1",
-      sex: "male",
-      date_of_birth: "1990-01-01",
-      height_cm: 180,
-      initial_weight_kg: 80,
-      timezone: "UTC",
-      preferred_units: "metric",
-      created_at: "2026-01-01T00:00:00Z",
-      updated_at: "2026-01-01T00:00:00Z",
-    });
+    const p = profileFromRow(PROFILE_ROW);
     expect(p.sex).toBe("male");
     expect(p.heightCm).toBe(180);
     expect(p.age).toBeGreaterThan(30);
     expect(p.age).toBeLessThan(80);
+  });
+});
+
+describe("accountFromRow", () => {
+  it("surfaces the stored activity level for the cold-start seed", () => {
+    expect(accountFromRow(PROFILE_ROW).activityLevel).toBe("very");
+  });
+});
+
+describe("bodyMeasurementFromRow", () => {
+  it("maps tape + direct body-fat columns to the domain shape", () => {
+    const m = bodyMeasurementFromRow({
+      id: "m1", user_id: "u1", date: "2026-06-02",
+      neck_cm: 38, waist_cm: 85, hip_cm: null, weight_kg: 80,
+      body_fat_pct: null, source: "manual", note: null,
+      created_at: "2026-06-02T00:00:00Z",
+    });
+    expect(m).toEqual({
+      id: "m1", date: "2026-06-02",
+      neckCm: 38, waistCm: 85, hipCm: null, weightKg: 80,
+      bodyFatPct: null, note: null,
+    });
+  });
+});
+
+describe("progressPhotoFromRow", () => {
+  it("maps the storage pointer", () => {
+    expect(progressPhotoFromRow({
+      id: "p1", user_id: "u1", date: "2026-06-02",
+      storage_path: "u1/2026-06-02-front.jpg", note: "front",
+      created_at: "2026-06-02T00:00:00Z",
+    })).toEqual({ id: "p1", date: "2026-06-02", storagePath: "u1/2026-06-02-front.jpg", note: "front" });
   });
 });
 

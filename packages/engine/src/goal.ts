@@ -16,7 +16,7 @@ export interface WeeklyGoal {
 /**
  * Daily calorie target derived from an inferred TDEE and a weekly goal.
  *
- *   weeklyEnergyDelta = kgPerWeek · 7700
+ *   weeklyEnergyDelta = kgPerWeek · 6200
  *   dailyTarget       = TDEE + weeklyEnergyDelta / 7
  *
  * Returned in kcal/day. A negative goal lowers the target below TDEE
@@ -25,6 +25,42 @@ export interface WeeklyGoal {
 export const dailyTargetFromTdee = (tdee: KcalDay, goal: WeeklyGoal): KcalDay => {
   const dailyDelta = (goal.kgPerWeek * KCAL_PER_KG_BODY_MASS) / 7;
   return kcalDay(tdee + dailyDelta);
+};
+
+/**
+ * Same as dailyTargetFromTdee, but ensures the goal doesn't exceed a
+ * maximum safe deficit or surplus (default 1.5% of body weight per week
+ * for gains, 1.0% for cuts).
+ */
+export const clampedDailyTargetFromTdee = (
+  tdee: KcalDay,
+  goal: WeeklyGoal,
+  bodyWeightKg: number,
+  opts: { maxCutPct?: number; maxGainPct?: number } = {},
+): { target: KcalDay; clamped: boolean; originalGoal: number; effectiveGoal: number } => {
+  const effectiveGoal = clampGoalToSafety(goal.kgPerWeek, bodyWeightKg, opts);
+  const target = dailyTargetFromTdee(tdee, { kgPerWeek: effectiveGoal });
+  return {
+    target,
+    clamped: effectiveGoal !== goal.kgPerWeek,
+    originalGoal: goal.kgPerWeek,
+    effectiveGoal,
+  };
+};
+
+/**
+ * Enforcement logic for safe weight-change rates. Defaults to
+ * -1.0 %/wk for cuts and +1.5 %/wk for gains.
+ */
+export const clampGoalToSafety = (
+  kgPerWeek: number,
+  bodyWeightKg: number,
+  opts: { maxCutPct?: number; maxGainPct?: number } = {},
+): number => {
+  if (kgPerWeek === 0) return 0;
+  const maxCut = -bodyWeightKg * (opts.maxCutPct ?? 0.01);
+  const maxGain = bodyWeightKg * (opts.maxGainPct ?? 0.015);
+  return Math.max(maxCut, Math.min(kgPerWeek, maxGain));
 };
 
 /**

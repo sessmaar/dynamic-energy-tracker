@@ -27,9 +27,24 @@ export interface ImportedWeightEntry {
   weightKg: number;
 }
 
+/**
+ * A body-composition row from MFP's measurements export. Circumferences
+ * are assumed to be cm and body fat is a 0..1 fraction. Every field is
+ * optional except the date — a given export may carry only some columns.
+ */
+export interface ImportedBodyMeasurement {
+  date: string;
+  neckCm: number | null;
+  waistCm: number | null;
+  hipCm: number | null;
+  bodyFatPct: number | null;
+  weightKg: number | null;
+}
+
 export interface ImportPreview {
   meals: ImportedMealItem[];
   weights: ImportedWeightEntry[];
+  bodyMeasurements: ImportedBodyMeasurement[];
   /** Rows we couldn't parse (header mismatch, bad numbers, etc.). */
   skipped: { line: number; reason: string; raw: string }[];
 }
@@ -94,7 +109,7 @@ const normalizeMealType = (raw: string): ImportedMealItem["mealType"] => {
  * (MFP doesn't produce them).
  */
 export const parseMfpCsv = (text: string): ImportPreview => {
-  const out: ImportPreview = { meals: [], weights: [], skipped: [] };
+  const out: ImportPreview = { meals: [], weights: [], bodyMeasurements: [], skipped: [] };
   const lines = text.replace(/\r\n/g, "\n").split("\n").filter((l) => l.length > 0);
   if (lines.length < 2) return out;
 
@@ -136,8 +151,16 @@ export const parseMfpCsv = (text: string): ImportPreview => {
   }
 
   // --- measurements export ---
-  // Typical columns: Date, Weight  (units depend on the account)
-  if (header.includes("weight") || header.includes("weight (kg)") || header.includes("weight (lb)")) {
+  // Typical columns: Date, Weight (units depend on the account). MFP can
+  // also export tracked circumferences and body fat: Neck, Waist, Hips,
+  // Body Fat %. We capture whichever of those are present.
+  const neckIdx = header.findIndex((h) => h.startsWith("neck"));
+  const waistIdx = header.findIndex((h) => h.startsWith("waist"));
+  const hipIdx = header.findIndex((h) => h.startsWith("hip"));
+  const bfIdx = header.findIndex((h) => h.startsWith("body fat") || h === "bodyfat" || h.includes("body fat"));
+  const hasComposition = neckIdx >= 0 || waistIdx >= 0 || hipIdx >= 0 || bfIdx >= 0;
+
+  if (header.includes("weight") || header.includes("weight (kg)") || header.includes("weight (lb)") || hasComposition) {
     const dateIdx = header.indexOf("date");
     const kgIdx = header.indexOf("weight (kg)");
     const lbIdx = header.indexOf("weight (lb)");
@@ -154,8 +177,23 @@ export const parseMfpCsv = (text: string): ImportPreview => {
         // Ambiguous units — assume kg. Caller can rescale in the preview UI.
         weightKg = num(cells[plainIdx]);
       }
+
+      // Body fat may be exported as a percent (e.g. 18.5) — store as 0..1.
+      const bfRaw = bfIdx >= 0 ? num(cells[bfIdx]) : null;
+      const bodyFatPct = bfRaw != null ? Number((bfRaw > 1 ? bfRaw / 100 : bfRaw).toFixed(3)) : null;
+      const neckCm = neckIdx >= 0 ? num(cells[neckIdx]) : null;
+      const waistCm = waistIdx >= 0 ? num(cells[waistIdx]) : null;
+      const hipCm = hipIdx >= 0 ? num(cells[hipIdx]) : null;
+
+      if (date && (neckCm != null || waistCm != null || hipCm != null || bodyFatPct != null)) {
+        out.bodyMeasurements.push({ date, neckCm, waistCm, hipCm, bodyFatPct, weightKg });
+      }
+
       if (!date || weightKg == null || weightKg <= 0) {
-        out.skipped.push({ line: li + 1, reason: "missing date / invalid weight", raw: lines[li]! });
+        // Only flag as skipped if there was nothing usable on the row at all.
+        if (!date || (weightKg == null && neckCm == null && waistCm == null && hipCm == null && bodyFatPct == null)) {
+          out.skipped.push({ line: li + 1, reason: "missing date / invalid weight", raw: lines[li]! });
+        }
         continue;
       }
       out.weights.push({ date, weightKg });

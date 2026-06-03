@@ -35,7 +35,7 @@ describe("computeWeeklyTdee", () => {
 
   it("infers a deficit when weight trends down", () => {
     // 2000 kcal/day intake, 0.5 kg trend-weight drop over the week.
-    // TDEE = (Σ intake − k·Δw)/n = (14000 − 7700·(-0.5))/7 ≈ 2550 kcal/day.
+    // TDEE = (Σ intake − k·Δw)/n = (14000 − 6200·(-0.5))/7 ≈ 2443 kcal/day.
     const dates = week("2026-06-01");
     const intake = dates.map((date) => ({ date: isoDate(date), calories: kcal(2000) }));
     // Trend drops by 0.5 kg over the week.
@@ -47,7 +47,7 @@ describe("computeWeeklyTdee", () => {
     expect(r.deltaWeightKg).toBeCloseTo(-0.5, 1);
     // Expect TDEE > intake when weight dropped.
     expect(r.tdeeWeek).toBeGreaterThan(2000);
-    expect(r.tdeeWeek).toBeCloseTo(2550, 0);
+    expect(r.tdeeWeek).toBeCloseTo(2443, 0);
   });
 
   it("completeness reflects missing days", () => {

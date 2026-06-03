@@ -5,15 +5,17 @@ import {
 import type { DataClient } from "./client";
 import {
   accountFromRow, type AccountProfile,
-  activityFromRow, foodFromRow, type FoodSummary, goalFromRow,
+  activityFromRow, bodyMeasurementFromRow, type BodyMeasurement,
+  foodFromRow, type FoodSummary, goalFromRow,
   goalWithMacrosFromRow, type GoalWithMacros,
   intakeFromRow, mealFromRow, type MealSummary, profileFromRow,
+  progressPhotoFromRow, type ProgressPhoto,
   recipeFromRow, type RecipeSummary, weightFromRow,
 } from "./mappers";
 import type {
-  ActivityBlockRow, DailyIntakeRow, EngineStateWeeklyRow, FoodRow, GoalRow,
-  MealItemRow, MealRow, MealType, ProfileRow, RecipeItemRow, RecipeRow,
-  Sex, WeightEntryRow,
+  ActivityBlockRow, ActivityLevel, BodyMeasurementRow, DailyIntakeRow, EngineStateWeeklyRow,
+  FoodRow, GoalRow, MealItemRow, MealRow, MealType, ProfileRow, ProgressPhotoRow,
+  RecipeItemRow, RecipeRow, Sex, WeightEntryRow,
 } from "./schema";
 import type { FoodCandidate } from "./openFoodFacts";
 
@@ -65,6 +67,7 @@ export const profileRepo = (db: DataClient) => ({
     dateOfBirth: string;
     heightCm: number;
     initialWeightKg: number;
+    activityLevel: ActivityLevel;
     timezone?: string;
   }): Promise<void> {
     const { error } = await db.from("profiles").upsert({
@@ -73,6 +76,7 @@ export const profileRepo = (db: DataClient) => ({
       date_of_birth: input.dateOfBirth,
       height_cm: input.heightCm,
       initial_weight_kg: input.initialWeightKg,
+      activity_level: input.activityLevel,
       timezone: input.timezone ?? "UTC",
       preferred_units: "metric",
     });
@@ -190,6 +194,123 @@ export const weightRepo = (db: DataClient) => ({
       source: "manual",
       note: input.note ?? null,
     });
+    if (error) throw error;
+  },
+});
+
+// ---------- body measurements --------------------------------------------
+
+export const bodyMeasurementRepo = (db: DataClient) => ({
+  async listSince(userId: string, sinceDate: IsoDate): Promise<BodyMeasurement[]> {
+    const { data, error } = await db
+      .from("body_measurements")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("date", sinceDate)
+      .order("date", { ascending: true });
+    if (error) throw error;
+    return rows<BodyMeasurementRow>(data).map(bodyMeasurementFromRow);
+  },
+
+  /** Most recent assessment, or null when the user has logged none. */
+  async latest(userId: string): Promise<BodyMeasurement | null> {
+    const { data, error } = await db
+      .from("body_measurements")
+      .select("*")
+      .eq("user_id", userId)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    const row = oneRow<BodyMeasurementRow>(data);
+    return row ? bodyMeasurementFromRow(row) : null;
+  },
+
+  async log(input: {
+    userId: string;
+    date: IsoDate;
+    neckCm?: number | null;
+    waistCm?: number | null;
+    hipCm?: number | null;
+    weightKg?: number | null;
+    bodyFatPct?: number | null;
+    note?: string | null;
+  }): Promise<void> {
+    const { error } = await db.from("body_measurements").insert({
+      user_id: input.userId,
+      date: input.date,
+      neck_cm: input.neckCm ?? null,
+      waist_cm: input.waistCm ?? null,
+      hip_cm: input.hipCm ?? null,
+      weight_kg: input.weightKg ?? null,
+      body_fat_pct: input.bodyFatPct ?? null,
+      source: "manual",
+      note: input.note ?? null,
+    });
+    if (error) throw error;
+  },
+});
+
+// ---------- progress photos ----------------------------------------------
+//
+// Photos live in the private 'progress-photos' Storage bucket, namespaced
+// by `<userId>/...` so the Storage RLS policy (migration 0007) grants the
+// owner access. This repo writes the bucket object AND the pointer row.
+
+const PHOTO_BUCKET = "progress-photos";
+
+export const progressPhotoRepo = (db: DataClient) => ({
+  async list(userId: string): Promise<ProgressPhoto[]> {
+    const { data, error } = await db
+      .from("progress_photos")
+      .select("*")
+      .eq("user_id", userId)
+      .order("date", { ascending: false });
+    if (error) throw error;
+    return rows<ProgressPhotoRow>(data).map(progressPhotoFromRow);
+  },
+
+  /** Signed URL for displaying a stored photo (bucket is private). */
+  async signedUrl(storagePath: string, expiresInSec = 3600): Promise<string | null> {
+    const { data, error } = await db.storage.from(PHOTO_BUCKET).createSignedUrl(storagePath, expiresInSec);
+    if (error) throw error;
+    return data?.signedUrl ?? null;
+  },
+
+  /**
+   * Upload bytes to the user's folder and record the pointer row. The
+   * caller supplies the raw body (Blob / ArrayBuffer / Uint8Array) and a
+   * file extension; the object key is `<userId>/<date>-<rand>.<ext>`.
+   */
+  async add(input: {
+    userId: string;
+    date: IsoDate;
+    body: Blob | ArrayBuffer | Uint8Array;
+    ext: string;
+    contentType: string;
+    note?: string | null;
+    keySuffix?: string;
+  }): Promise<void> {
+    const suffix = input.keySuffix ?? input.date;
+    const path = `${input.userId}/${input.date}-${suffix}.${input.ext}`;
+    const up = await db.storage.from(PHOTO_BUCKET).upload(path, input.body, {
+      contentType: input.contentType,
+      upsert: true,
+    });
+    if (up.error) throw up.error;
+    const { error } = await db.from("progress_photos").insert({
+      user_id: input.userId,
+      date: input.date,
+      storage_path: path,
+      note: input.note ?? null,
+    });
+    if (error) throw error;
+  },
+
+  async remove(photo: { id: string; storagePath: string }): Promise<void> {
+    const rm = await db.storage.from(PHOTO_BUCKET).remove([photo.storagePath]);
+    if (rm.error) throw rm.error;
+    const { error } = await db.from("progress_photos").delete().eq("id", photo.id);
     if (error) throw error;
   },
 });
@@ -702,6 +823,8 @@ export const repositories = (db: DataClient) => ({
   profile:     profileRepo(db),
   goal:        goalRepo(db),
   weight:      weightRepo(db),
+  bodyMeasurement: bodyMeasurementRepo(db),
+  progressPhoto:   progressPhotoRepo(db),
   intake:      intakeRepo(db),
   food:        foodRepo(db),
   meal:        mealRepo(db),

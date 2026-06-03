@@ -107,14 +107,14 @@ describe("expectedRateFromBalance", () => {
     expect(expectedRateFromBalance(intake, 2500)).toBeCloseTo(0, 5);
   });
 
-  it("500 kcal/day deficit → ~-0.45 kg/week", () => {
-    // 7 * 500 / 7700 = 0.4545
+  it("500 kcal/day deficit → ~-0.56 kg/week", () => {
+    // 7 * 500 / 6200 = 0.5645
     const intake = Array.from({ length: 14 }, (_, i) => {
       const d = new Date("2026-06-01T00:00:00Z");
       d.setUTCDate(d.getUTCDate() + i);
       return { date: isoDate(d.toISOString().slice(0, 10)), calories: kcal(2000) };
     });
-    expect(expectedRateFromBalance(intake, 2500)).toBeCloseTo(-0.4545, 2);
+    expect(expectedRateFromBalance(intake, 2500)).toBeCloseTo(-0.5645, 2);
   });
 
   it("returns null when intake is sparse", () => {
@@ -132,6 +132,39 @@ describe("fullTrajectory", () => {
     });
     const r = fullTrajectory(weights, { intake, tdee: 2500, goalRatePerWeek: -0.5 });
     expect(r).not.toBeNull();
-    expect(r!.verdict.expectedRatePerWeek).toBeCloseTo(-0.4545, 2);
+    expect(r!.verdict.expectedRatePerWeek).toBeCloseTo(-0.5645, 2);
+  });
+});
+
+describe("transient water calculation", () => {
+  it("computes transient water when intake is provided", () => {
+    const weights = series(Array(14).fill(80));
+    const intake = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date("2026-06-01T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + i);
+      // Days 0-12: 200g carbs. Day 13 (latest): 400g carbs.
+      const carbs = i === 13 ? 400 : 200;
+      return { date: isoDate(d.toISOString().slice(0, 10)), calories: kcal(2000), carbsG: carbs };
+    });
+
+    const a = analyzeTrend(weights, { intake })!;
+    // median of [200, ..., 200, 400] is 200.
+    // latest (400) - median (200) = 200g excess carbs.
+    // 200 * 2.7 / 1000 = 0.54 kg water.
+    expect(a.transientWaterKg).toBeCloseTo(0.54, 2);
+  });
+
+  it("verdict includes transient water", () => {
+    const weights = series(Array(14).fill(80));
+    const intake = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date("2026-06-01T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + i);
+      const carbs = i === 13 ? 400 : 200;
+      return { date: isoDate(d.toISOString().slice(0, 10)), calories: kcal(2000), carbsG: carbs };
+    });
+
+    const { verdict } = fullTrajectory(weights, { intake })!;
+    expect(verdict.transientWaterKg).toBeCloseTo(0.54, 2);
+    expect(verdict.cue).toMatch(/\(incl. ~0.5kg water\)/);
   });
 });

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import {
   type KcalDay, type WeeklyTdeeResult,
+  DEFAULT_ACTIVITY_LEVEL,
   cm, computeWeeklyTdee, dailyTargetFromTdee, ewmaTrend, isoDate,
-  kcalDay, kg, mifflinStJeor, updateTdeePosterior, years,
+  kg, mifflinStJeor, seedTdee, updateTdeePosterior, years,
 } from "@dynamic-energy/engine";
 import { LineChart } from "@/components/LineChart";
 import { Runway } from "@/components/Runway";
@@ -25,9 +26,10 @@ export default function ConsolePage() {
   const windows = weeklyWindows(data.startDate, data.today);
 
   // Walk every Monday in order, running the Bayesian update each week.
-  // The initial prior is BMR × 1.4 — same seed value the mobile onboarding uses.
+  // The initial prior is BMR × PAL — same lifestyle-seeded value the mobile
+  // onboarding produces. This demo user is treated as moderately active.
   const profile = { sex: "male" as const, age: years(34), heightCm: cm(180) };
-  const seedTdee = kcalDay(mifflinStJeor(profile, kg(data.profile.startWeightKg)) * 1.4);
+  const seedPrior = seedTdee(profile, kg(data.profile.startWeightKg), DEFAULT_ACTIVITY_LEVEL);
 
   const history: Array<{
     week: { start: string; end: string };
@@ -37,7 +39,7 @@ export default function ConsolePage() {
     alpha: number;
   }> = [];
 
-  let prior = seedTdee;
+  let prior = seedPrior;
   for (const w of windows) {
     const result = computeWeeklyTdee(isoDate(w.start), isoDate(w.end), data.intake, data.weights);
     const updated = updateTdeePosterior(prior, result);
@@ -45,7 +47,7 @@ export default function ConsolePage() {
     prior = updated.posterior;
   }
 
-  const currentTdee = history[history.length - 1]?.posterior ?? seedTdee;
+  const currentTdee = history[history.length - 1]?.posterior ?? seedPrior;
   const currentTarget = dailyTargetFromTdee(currentTdee, { kgPerWeek: data.profile.goalKgPerWeek });
 
   // --- chart series ----------------------------------------------------------
@@ -55,7 +57,7 @@ export default function ConsolePage() {
     x: i / Math.max(history.length - 1, 1),
     y: h.posterior,
   }));
-  const tdeeAll = [...tdeeSeries.map((p) => p.y), data.profile.trueTdee, Number(seedTdee)];
+  const tdeeAll = [...tdeeSeries.map((p) => p.y), data.profile.trueTdee, Number(seedPrior)];
   const tdeeMin = Math.min(...tdeeAll) - 50;
   const tdeeMax = Math.max(...tdeeAll) + 50;
 

@@ -3,6 +3,7 @@ import {
   KCAL_PER_KG_BODY_MASS,
 } from "./types";
 import { ewmaTrend } from "./trendWeight";
+import { carbWaterMassKg, medianCarbBaseline } from "./waterAdjust";
 
 /**
  * Trajectory analysis — the "am I actually losing weight?" question,
@@ -24,7 +25,7 @@ import { ewmaTrend } from "./trendWeight";
  *      maintaining (if both magnitude and CI agree) or inconclusive.
  *
  * The "expected rate" is the engine's prediction from logged intake vs.
- * inferred TDEE: (avgIntake − TDEE) · 7 / 7700. Comparing actual to
+ * inferred TDEE: (avgIntake − TDEE) · 7 / 6200. Comparing actual to
  * expected lets the UI say things like "you're losing 0.42 kg/wk —
  * matches your target".
  */
@@ -44,6 +45,8 @@ export interface TrendAnalysis {
   rawDailySDKg: number;
   /** Linear-fit y-intercept, in trend kg at window start. Mostly for chart overlay. */
   intercept: number;
+  /** Estimated transient water mass (kg) from recent carb intake. */
+  transientWaterKg: number;
 }
 
 const MS_PER_DAY = 86_400_000;
@@ -79,6 +82,55 @@ const ols = (
 };
 
 /**
+ * Weighted Least Squares (WLS) for time series.
+ * Applies exponential decay weights to recent observations.
+ * Provides better recency focus while maintaining statistical integrity
+ * of the standard error vs. regressing on smoothed data.
+ */
+const wls = (
+  pairs: readonly { x: number; y: number }[],
+  alpha: number,
+): {
+  slope: number;
+  intercept: number;
+  residualSD: number;
+} | null => {
+  const n = pairs.length;
+  if (n < 2) return null;
+
+  // Latest point has weight 1.0, weights decay backwards.
+  const maxX = Math.max(...pairs.map((p) => p.x));
+  const weighted = pairs.map((p) => ({
+    ...p,
+    w: Math.pow(1 - alpha, maxX - p.x),
+  }));
+
+  let sw = 0, swx = 0, swy = 0, swxx = 0, swxy = 0;
+  for (const p of weighted) {
+    sw += p.w;
+    swx += p.w * p.x;
+    swy += p.w * p.y;
+    swxx += p.w * p.x * p.x;
+    swxy += p.w * p.x * p.y;
+  }
+
+  const denom = sw * swxx - swx * swx;
+  if (Math.abs(denom) < 1e-12) return null;
+  const slope = (sw * swxy - swx * swy) / denom;
+  const intercept = (swy - slope * swx) / sw;
+
+  let rwss = 0;
+  for (const p of weighted) {
+    const err = p.y - (slope * p.x + intercept);
+    rwss += p.w * err * err;
+  }
+
+  // Effective degrees of freedom for WLS is roughly Σw / max(w) - 2.
+  // Using sw - 2 is a conservative approximation for uncertainty.
+  return { slope, intercept, residualSD: Math.sqrt(rwss / Math.max(sw - 2, 0.1)) };
+};
+
+/**
  * Convert YYYY-MM-DD into an integer day offset from `originIso`.
  * Avoids JS Date timezone gotchas by parsing as UTC.
  */
@@ -90,21 +142,26 @@ const dayIndex = (iso: string, originIso: string): number => {
 
 /**
  * Run the full analysis. Returns null if the user has fewer than ~3
- * trend points inside the window — there's no honest line to fit.
+ * weight points inside the window — there's no honest line to fit.
+ *
+ * 2025 Refinement: Switches from OLS-on-EWMA to WLS-on-Raw.
+ * Regressing on pre-smoothed data underestimates standard error due to
+ * artificial autocorrelation. WLS on raw weights with exponential decay
+ * achieves the same "recency bias" while providing scientifically
+ * valid confidence intervals.
  */
 export const analyzeTrend = (
   weights: readonly WeightEntry[],
-  opts: { windowDays?: number; ewmaAlpha?: number } = {},
+  opts: { windowDays?: number; alpha?: number; intake?: readonly IntakeEntry[] } = {},
 ): TrendAnalysis | null => {
   const windowDays = opts.windowDays ?? 14;
-  const ewmaAlpha = opts.ewmaAlpha ?? 0.1;
+  const alpha = opts.alpha ?? 0.1;
 
   if (weights.length < 3) return null;
   const sorted = [...weights].sort((a, b) => (a.date < b.date ? -1 : 1));
-  const trend = ewmaTrend(sorted, ewmaAlpha);
 
-  // Clip to the trailing `windowDays` calendar days, using the latest
-  // weight entry as "today".
+  // Clip raw weights to the trailing `windowDays` calendar days, using
+  // the latest weight entry as "today".
   const latestDate = sorted[sorted.length - 1]!.date;
   const earliest = (() => {
     const d = new Date(`${latestDate}T00:00:00Z`);
@@ -112,33 +169,56 @@ export const analyzeTrend = (
     return d.toISOString().slice(0, 10);
   })();
 
-  const trendInWindow = trend.filter((t) => t.date >= earliest);
-  if (trendInWindow.length < 3) return null;
+  const rawInWindow = sorted.filter((w) => w.date >= earliest);
+  if (rawInWindow.length < 3) return null;
 
-  const origin = trendInWindow[0]!.date;
-  const pairs = trendInWindow.map((t) => ({
-    x: dayIndex(t.date, origin),
-    y: t.trend as number,
+  const origin = rawInWindow[0]!.date;
+  const pairs = rawInWindow.map((w) => ({
+    x: dayIndex(w.date, origin),
+    y: w.weight as number,
   }));
 
-  const fit = ols(pairs);
+  const fit = wls(pairs, alpha);
   if (!fit) return null;
 
-  // SE of slope = residualSD / sqrt(Σ(x - x̄)²)
-  let sxx = 0;
-  const meanX = pairs.reduce((s, p) => s + p.x, 0) / pairs.length;
-  for (const p of pairs) { const dx = p.x - meanX; sxx += dx * dx; }
-  const slopeSE = fit.residualSD / Math.sqrt(sxx);
+  // In WLS, the standard error formula uses the weighted sum of squares.
+  let swxx = 0;
+  let sw = 0, swx = 0;
+  const maxX = Math.max(...pairs.map((p) => p.x));
+  for (const p of pairs) {
+    const w = Math.pow(1 - alpha, maxX - p.x);
+    sw += w;
+    swx += w * p.x;
+  }
+  const weightedMeanX = swx / sw;
+  for (const p of pairs) {
+    const w = Math.pow(1 - alpha, maxX - p.x);
+    const dx = p.x - weightedMeanX;
+    swxx += w * dx * dx;
+  }
+  const slopeSE = fit.residualSD / Math.sqrt(swxx);
 
   const ratePerWeek = fit.slope * 7;
   const ratePerWeekSE = slopeSE * 7;
 
-  // Raw scale-noise SD (what the user actually sees jumping around).
-  const rawInWindow = sorted.filter((w) => w.date >= earliest).map((w) => w.weight as number);
-  const rawMean = rawInWindow.reduce((s, v) => s + v, 0) / rawInWindow.length;
-  const rawSD = rawInWindow.length > 1
-    ? Math.sqrt(rawInWindow.reduce((s, v) => s + (v - rawMean) ** 2, 0) / (rawInWindow.length - 1))
+  // Raw daily SD for the UI noise metric.
+  const rawValues = rawInWindow.map((w) => w.weight as number);
+  const rawMean = rawValues.reduce((s, v) => s + v, 0) / rawValues.length;
+  const rawSD = rawValues.length > 1
+    ? Math.sqrt(rawValues.reduce((s, v) => s + (v - rawMean) ** 2, 0) / (rawValues.length - 1))
     : 0;
+
+  // Transient water from carbs.
+  let transientWaterKg = 0;
+  if (opts.intake && opts.intake.length > 0) {
+    const intakeInWindow = opts.intake.filter((i) => i.date >= earliest && i.date <= latestDate);
+    const latestIntake = intakeInWindow.find((i) => i.date === latestDate);
+    if (latestIntake && latestIntake.carbsG != null) {
+      const carbsInWindow = intakeInWindow.map((i) => i.carbsG).filter((c): c is number => c != null);
+      const baseline = medianCarbBaseline(carbsInWindow);
+      transientWaterKg = carbWaterMassKg(latestIntake.carbsG, baseline);
+    }
+  }
 
   return {
     ratePerWeek,
@@ -147,10 +227,11 @@ export const analyzeTrend = (
       lo: ratePerWeek - 1.96 * ratePerWeekSE,
       hi: ratePerWeek + 1.96 * ratePerWeekSE,
     },
-    windowDays: pairs.length,
+    windowDays: rawInWindow.length,
     residualSDKg: fit.residualSD,
     rawDailySDKg: rawSD,
     intercept: fit.intercept,
+    transientWaterKg,
   };
 };
 
@@ -172,6 +253,9 @@ export interface TrajectoryVerdict {
   /** True when actual rate matches goal within tolerance. */
   onTrack?: boolean;
 
+  /** Estimated transient water mass (kg) from recent carb intake. */
+  transientWaterKg: number;
+
   /** Single-line UI cue. */
   cue: string;
 }
@@ -190,7 +274,7 @@ export const classifyTrajectory = (
   const maintainThreshold = opts.maintainThreshold ?? 0.1;
   const onTrackTolerance = opts.onTrackTolerance ?? 0.15;
 
-  const { ratePerWeek, ratePerWeekCI } = analysis;
+  const { ratePerWeek, ratePerWeekCI, transientWaterKg } = analysis;
   const ciCrossesZero = ratePerWeekCI.lo <= 0 && ratePerWeekCI.hi >= 0;
   const magnitudeBelowThreshold = Math.abs(ratePerWeek) < maintainThreshold;
 
@@ -209,10 +293,11 @@ export const classifyTrajectory = (
     ? Math.abs(ratePerWeek - opts.goalRatePerWeek) <= onTrackTolerance
     : undefined;
 
-  const cue = buildCue(status, ratePerWeek, ratePerWeekCI, opts.goalRatePerWeek, onTrack);
+  const cue = buildCue(status, ratePerWeek, ratePerWeekCI, transientWaterKg, opts.goalRatePerWeek, onTrack);
 
   return {
     status, ratePerWeek, ratePerWeekCI,
+    transientWaterKg,
     ...(opts.expectedRatePerWeek !== undefined ? { expectedRatePerWeek: opts.expectedRatePerWeek } : {}),
     ...(opts.goalRatePerWeek !== undefined ? { goalRatePerWeek: opts.goalRatePerWeek } : {}),
     ...(onTrack !== undefined ? { onTrack } : {}),
@@ -224,16 +309,22 @@ const buildCue = (
   status: Trajectory,
   rate: number,
   ci: { lo: number; hi: number },
+  transientWater: number,
   goal?: number,
   onTrack?: boolean,
 ): string => {
   const fmt = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(2)} kg/wk`;
   const ciStr = `±${((ci.hi - ci.lo) / 2).toFixed(2)}`;
-  const base =
+  let base =
     status === "maintaining" ? "HOLDING · trend flat within noise"
     : status === "inconclusive" ? `INCONCLUSIVE · rate ${fmt(rate)} ${ciStr} crosses zero`
     : status === "losing" ? `LOSING ${fmt(rate)} ${ciStr}`
     : `GAINING ${fmt(rate)} ${ciStr}`;
+
+  if (transientWater > 0.3) {
+    base += ` (incl. ~${transientWater.toFixed(1)}kg water)`;
+  }
+
   if (goal == null) return base;
   if (status === "inconclusive") return base;
   if (onTrack) return `${base} · on target`;
@@ -282,6 +373,7 @@ export const fullTrajectory = (
   const analysis = analyzeTrend(weights, {
     ...(opts.windowDays !== undefined ? { windowDays: opts.windowDays } : {}),
     ...(opts.ewmaAlpha !== undefined ? { ewmaAlpha: opts.ewmaAlpha } : {}),
+    intake: opts.intake,
   });
   if (!analysis) return null;
   const expectedRatePerWeek = opts.intake && opts.tdee != null

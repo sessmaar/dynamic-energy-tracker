@@ -1,11 +1,12 @@
 import {
-  type ActivityBlock, type IntakeEntry, type IsoDate, type KcalDay, type Sex,
-  type UserProfile, type WeeklyTdeeResult, type WeightEntry,
-  alphaForDaysWithBoth, computeWeeklyTdee, dailyTargetFromTdee,
+  type ActivityBlock, type ActivityLevel, type Composition, type IntakeEntry, type IsoDate,
+  type Kg, type KcalDay, type Sex, type UserProfile, type WeeklyTdeeResult, type WeightEntry,
+  DEFAULT_ACTIVITY_LEVEL, alphaForDaysWithBoth, cm, computeWeeklyTdee, dailyTargetFromTdee,
   distributeWeeklyTarget, fullTrajectory, isoDate, kcalDay, latestTrendWeight,
-  localDateInTimezone, mifflinStJeor, totalActiveCalories, updateTdeePosterior,
+  localDateInTimezone, resolveComposition, restingEnergy, seedTdee, totalActiveCalories,
+  unit, updateTdeePosterior,
 } from "@dynamic-energy/engine";
-import type { MealSummary, RecipeSummary } from "@dynamic-energy/data";
+import type { BodyMeasurement, MealSummary, ProgressPhoto, RecipeSummary } from "@dynamic-energy/data";
 import { create } from "zustand";
 import { repos, supabase } from "@/lib/supabase";
 
@@ -33,6 +34,8 @@ interface EngineState {
   initialWeightKg: number | null;
   /** IANA zone (e.g. America/Los_Angeles). Falls back to UTC pre-hydration. */
   timezone: string;
+  /** Lifestyle tier used to seed the cold-start TDEE prior (BMR × PAL). */
+  activityLevel: ActivityLevel;
   goalKgPerWeek: number;
 
   weights: WeightEntry[];
@@ -40,6 +43,11 @@ interface EngineState {
   activity: ActivityBlock[];
   todayMeals: MealSummary[];
   recipes: RecipeSummary[];
+  /** Most recent body-composition assessment, or null. */
+  latestMeasurement: BodyMeasurement | null;
+  /** Derived composition (body-fat + lean mass) vs current trend weight. */
+  composition: Composition | null;
+  progressPhotos: ProgressPhoto[];
   /** Macro targets in grams, or null when user hasn't set them. */
   macroTargets: { proteinG: number | null; carbsG: number | null; fatG: number | null };
 
@@ -54,6 +62,7 @@ interface EngineState {
     dateOfBirth: string;
     heightCm: number;
     initialWeightKg: number;
+    activityLevel: ActivityLevel;
     goalKgPerWeek: number;
     timezone?: string;
   }) => Promise<void>;
@@ -64,6 +73,30 @@ interface EngineState {
     activityType: string;
     metValue: number;
     minutes: number;
+    date?: string;
+  }) => Promise<void>;
+
+  /**
+   * Log a body-composition assessment. Tape circumferences and/or a
+   * directly-measured body-fat fraction (0..1) are all optional; the
+   * engine resolves whatever is present into lean mass for the formula.
+   */
+  logComposition: (input: {
+    neckCm?: number | null;
+    waistCm?: number | null;
+    hipCm?: number | null;
+    weightKg?: number | null;
+    bodyFatPct?: number | null;
+    note?: string | null;
+    date?: string;
+  }) => Promise<void>;
+
+  /** Upload a progress photo to the private bucket and record the pointer. */
+  addProgressPhoto: (input: {
+    body: Blob | ArrayBuffer | Uint8Array;
+    ext: string;
+    contentType: string;
+    note?: string | null;
     date?: string;
   }) => Promise<void>;
 
@@ -92,16 +125,45 @@ const ninetyDaysAgo = (timezone: string): IsoDate => {
 };
 
 /**
+ * Resolve the latest body-composition assessment into a `Composition`
+ * (body-fat fraction + lean mass) against the *current* trend weight, so
+ * the resting-energy model uses up-to-date lean mass. Returns null when
+ * there's no usable measurement, in which case callers fall back to
+ * Mifflin–St Jeor. All the science lives in the engine's
+ * `resolveComposition`; this only brands the raw row values.
+ */
+const resolveStateComposition = (
+  profile: UserProfile | null,
+  trend: Kg | null,
+  m: BodyMeasurement | null,
+): Composition | null => {
+  if (!profile || !trend || !m) return null;
+  return resolveComposition({
+    sex: profile.sex,
+    heightCm: profile.heightCm,
+    weightKg: trend,
+    neckCm: m.neckCm != null ? cm(m.neckCm) : undefined,
+    waistCm: m.waistCm != null ? cm(m.waistCm) : undefined,
+    hipCm: m.hipCm != null ? cm(m.hipCm) : undefined,
+    directBodyFatPct: m.bodyFatPct != null ? unit(m.bodyFatPct) : undefined,
+  });
+};
+
+/**
  * Re-derive TDEE from the current store snapshot. Walks each weekly
  * window from oldest → newest applying the Bayesian update; falls back
- * to BMR × 1.4 when there are no completed weeks (cold start).
+ * to the lifestyle-matched cold-start prior (RMR × PAL) when there are
+ * no completed weeks. RMR uses Katch–McArdle when a composition is
+ * available, else Mifflin–St Jeor.
  */
-const deriveTdee = (s: Pick<EngineState, "profile" | "weights" | "intake" | "timezone">): KcalDay | null => {
+const deriveTdee = (
+  s: Pick<EngineState, "profile" | "weights" | "intake" | "timezone" | "activityLevel" | "composition">,
+): KcalDay | null => {
   if (!s.profile || s.weights.length === 0) return null;
   const trend = latestTrendWeight(s.weights);
   if (!trend) return null;
 
-  const seed = kcalDay(mifflinStJeor(s.profile, trend) * 1.4);
+  const seed = seedTdee(s.profile, trend, s.activityLevel, s.composition);
 
   const earliestDate = s.weights[0]!.date;
   const start = new Date(`${earliestDate}T00:00:00Z`);
@@ -136,12 +198,16 @@ export const useEngine = create<EngineState>((set, get) => ({
   dateOfBirth: null,
   initialWeightKg: null,
   timezone: DEFAULT_TZ,
+  activityLevel: DEFAULT_ACTIVITY_LEVEL,
   goalKgPerWeek: 0,
   weights: [],
   intake: [],
   activity: [],
   todayMeals: [],
   recipes: [],
+  latestMeasurement: null,
+  composition: null,
+  progressPhotos: [],
   macroTargets: { proteinG: null, carbsG: null, fatG: null },
   tdee: null,
   lastCheckin: null,
@@ -153,26 +219,35 @@ export const useEngine = create<EngineState>((set, get) => ({
       const tz = account?.timezone ?? DEFAULT_TZ;
       const since = ninetyDaysAgo(tz);
       const todayIso = localToday(tz);
-      const [goalWithMacros, weights, intake, activity, todayMeals, recipes] = await Promise.all([
-        repos.goal.getActiveWithMacros(userId),
-        repos.weight.listSince(userId, since),
-        repos.intake.listSince(userId, since),
-        repos.activity.listSince(userId, since),
-        repos.meal.listForDate(userId, todayIso),
-        repos.recipe.list(userId),
-      ]);
+      const [goalWithMacros, weights, intake, activity, todayMeals, recipes, latestMeasurement, progressPhotos] =
+        await Promise.all([
+          repos.goal.getActiveWithMacros(userId),
+          repos.weight.listSince(userId, since),
+          repos.intake.listSince(userId, since),
+          repos.activity.listSince(userId, since),
+          repos.meal.listForDate(userId, todayIso),
+          repos.recipe.list(userId),
+          repos.bodyMeasurement.latest(userId),
+          repos.progressPhoto.list(userId),
+        ]);
       const goal = goalWithMacros?.weekly ?? null;
+      const activityLevel = account?.activityLevel ?? DEFAULT_ACTIVITY_LEVEL;
+      const profile = account?.profile ?? null;
+      const composition = resolveStateComposition(profile, latestTrendWeight(weights), latestMeasurement);
       const snapshot = {
-        profile: account?.profile ?? null,
+        profile,
         weights,
         intake,
         timezone: tz,
+        activityLevel,
+        composition,
       };
       set({
-        profile: account?.profile ?? null,
+        profile,
         dateOfBirth: account?.dateOfBirth ?? null,
         initialWeightKg: account?.initialWeightKg ?? null,
         timezone: tz,
+        activityLevel,
         goalKgPerWeek: goal?.kgPerWeek ?? 0,
         macroTargets: {
           proteinG: goalWithMacros?.proteinG ?? null,
@@ -180,6 +255,7 @@ export const useEngine = create<EngineState>((set, get) => ({
           fatG: goalWithMacros?.fatG ?? null,
         },
         weights, intake, activity, todayMeals, recipes,
+        latestMeasurement, progressPhotos, composition,
         tdee: deriveTdee(snapshot),
         loading: false,
       });
@@ -190,9 +266,10 @@ export const useEngine = create<EngineState>((set, get) => ({
 
   reset: () => set({
     userId: null, profile: null, dateOfBirth: null, initialWeightKg: null,
-    timezone: DEFAULT_TZ, goalKgPerWeek: 0,
+    timezone: DEFAULT_TZ, activityLevel: DEFAULT_ACTIVITY_LEVEL, goalKgPerWeek: 0,
     macroTargets: { proteinG: null, carbsG: null, fatG: null },
     weights: [], intake: [], activity: [], todayMeals: [], recipes: [],
+    latestMeasurement: null, composition: null, progressPhotos: [],
     tdee: null, lastCheckin: null, error: null,
   }),
 
@@ -206,6 +283,7 @@ export const useEngine = create<EngineState>((set, get) => ({
       dateOfBirth: input.dateOfBirth,
       heightCm: input.heightCm,
       initialWeightKg: input.initialWeightKg,
+      activityLevel: input.activityLevel,
       timezone: tz,
     });
     const goalType: "cut" | "maintain" | "gain" =
@@ -261,6 +339,36 @@ export const useEngine = create<EngineState>((set, get) => ({
     await get().hydrate(userId);
   },
 
+  logComposition: async (input) => {
+    const { userId, timezone } = get();
+    if (!userId) throw new Error("Not signed in");
+    await repos.bodyMeasurement.log({
+      userId,
+      date: isoDate(input.date ?? localToday(timezone)),
+      neckCm: input.neckCm ?? null,
+      waistCm: input.waistCm ?? null,
+      hipCm: input.hipCm ?? null,
+      weightKg: input.weightKg ?? null,
+      bodyFatPct: input.bodyFatPct ?? null,
+      note: input.note ?? null,
+    });
+    await get().hydrate(userId);
+  },
+
+  addProgressPhoto: async (input) => {
+    const { userId, timezone } = get();
+    if (!userId) throw new Error("Not signed in");
+    await repos.progressPhoto.add({
+      userId,
+      date: isoDate(input.date ?? localToday(timezone)),
+      body: input.body,
+      ext: input.ext,
+      contentType: input.contentType,
+      note: input.note ?? null,
+    });
+    await get().hydrate(userId);
+  },
+
   deleteMeal: async (mealId) => {
     const userId = get().userId;
     if (!userId) throw new Error("Not signed in");
@@ -272,7 +380,7 @@ export const useEngine = create<EngineState>((set, get) => ({
     const s = get();
     if (!s.userId || !s.profile) return null;
     const result = computeWeeklyTdee(isoDate(weekStart), isoDate(weekEnd), s.intake, s.weights);
-    const prior = s.tdee ?? kcalDay(mifflinStJeor(s.profile, latestTrendWeight(s.weights)!) * 1.4);
+    const prior = s.tdee ?? seedTdee(s.profile, latestTrendWeight(s.weights)!, s.activityLevel, s.composition);
     const update = updateTdeePosterior(prior, result);
     set({ lastCheckin: result });
 
@@ -301,12 +409,14 @@ export const useEngine = create<EngineState>((set, get) => ({
     const { userId, timezone } = get();
     if (!userId) throw new Error("Not signed in");
     const since = isoDate("1970-01-01");
-    const [account, goal, weights, intake, activity] = await Promise.all([
+    const [account, goal, weights, intake, activity, bodyMeasurements, progressPhotos] = await Promise.all([
       repos.profile.getAccount(userId),
       repos.goal.getActive(userId),
       repos.weight.listSince(userId, since),
       repos.intake.listSince(userId, since),
       repos.activity.listSince(userId, since),
+      repos.bodyMeasurement.listSince(userId, since),
+      repos.progressPhoto.list(userId),
     ]);
     // Last 365 days of meals as a flat list. Per-day detail is the
     // expensive bit, but a year is well under what export sheets handle.
@@ -328,6 +438,8 @@ export const useEngine = create<EngineState>((set, get) => ({
       weights,
       intake,
       activity,
+      bodyMeasurements,
+      progressPhotos,
       meals,
     }, null, 2);
   },
@@ -363,8 +475,12 @@ export const selectBmr = (s: EngineState): number | null => {
   if (!s.profile) return null;
   const trend = latestTrendWeight(s.weights);
   if (!trend) return null;
-  return mifflinStJeor(s.profile, trend);
+  // Katch–McArdle when a measured composition exists, else Mifflin–St Jeor.
+  return restingEnergy(s.profile, trend, s.composition);
 };
+
+/** Body-fat fraction (0..1) and lean mass for the Command readout, or null. */
+export const selectComposition = (s: EngineState): Composition | null => s.composition;
 
 /**
  * Today's macro totals from the loaded meals. Returns {0,0,0} when no
@@ -387,6 +503,51 @@ export const selectWeeklyTargets = (s: EngineState): readonly KcalDay[] | null =
   const avg = selectDailyTarget(s);
   if (avg === null) return null;
   return distributeWeeklyTarget(avg, [true, false, true, false, true, false, false]);
+};
+
+/**
+ * Calculates days remaining until the next Bayesian update or high-conviction
+ * threshold.
+ */
+export const selectConvergenceStatus = (s: EngineState): {
+  daysRemaining: number;
+  currentAlpha: number;
+  nextAlpha: number;
+  isConverged: boolean;
+} | null => {
+  if (!s.userId || !s.profile || s.weights.length === 0) return null;
+
+  const today = localDateInTimezone(s.timezone);
+  const start = new Date(`${today}T00:00:00Z`);
+  const day = start.getUTCDay();
+  // Find the most recent Monday
+  const delta = day === 0 ? 6 : day - 1;
+  start.setUTCDate(start.getUTCDate() - delta);
+  const weekStart = start.toISOString().slice(0, 10);
+
+  const intakeInWeek = s.intake.filter((i) => i.date >= weekStart && i.date <= today);
+  const weightsInWeek = s.weights.filter((w) => w.date >= weekStart && w.date <= today);
+
+  const intakeDates = new Set(intakeInWeek.map((i) => i.date));
+  const weightDates = new Set(weightsInWeek.map((w) => w.date));
+  let daysWithBoth = 0;
+  for (const date of intakeDates) if (weightDates.has(date)) daysWithBoth++;
+
+  const currentAlpha = alphaForDaysWithBoth(daysWithBoth);
+  const isConverged = currentAlpha >= 0.6;
+
+  let daysRemaining = 0;
+  let nextAlpha = currentAlpha;
+
+  if (daysWithBoth < 3) {
+    daysRemaining = 3 - daysWithBoth;
+    nextAlpha = 0.4;
+  } else if (daysWithBoth < 5) {
+    daysRemaining = 5 - daysWithBoth;
+    nextAlpha = 0.6;
+  }
+
+  return { daysRemaining, currentAlpha, nextAlpha, isConverged };
 };
 
 /**

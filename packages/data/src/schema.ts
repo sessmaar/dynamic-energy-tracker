@@ -1,8 +1,8 @@
 /**
  * Database row types. These mirror the SQL schema in
- * supabase/migrations/0001_init.sql. Kept hand-written for now —
- * once the schema stabilizes, swap to `supabase gen types typescript`
- * output and delete this file.
+ * supabase/migrations/0001_init.sql through 0008_soft_delete.sql.
+ * Kept hand-written for now — once the schema stabilizes, swap to
+ * `supabase gen types typescript` output and delete this file.
  *
  * All numeric columns come back from supabase-js as `number`. Date
  * columns come back as ISO `YYYY-MM-DD` strings; timestamps as ISO
@@ -26,6 +26,8 @@ export interface ProfileRow {
   activity_level: ActivityLevel;
   created_at: string;
   updated_at: string;
+  /** Soft-delete timestamp (0008_soft_delete). Null = active. */
+  deleted_at: string | null;
 }
 
 export interface GoalRow {
@@ -40,6 +42,7 @@ export interface GoalRow {
   carbs_g_target: number | null;
   fat_g_target: number | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 export interface WeightEntryRow {
@@ -50,6 +53,7 @@ export interface WeightEntryRow {
   source: WeightSource;
   note: string | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 /**
@@ -70,6 +74,7 @@ export interface BodyMeasurementRow {
   source: WeightSource;
   note: string | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 /** Pointer to a progress photo in the private `progress-photos` bucket. */
@@ -80,6 +85,7 @@ export interface ProgressPhotoRow {
   storage_path: string;
   note: string | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 /**
@@ -125,6 +131,7 @@ export interface MealRow {
   eaten_at: string | null;
   notes: string | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 export interface RecipeRow {
@@ -133,6 +140,7 @@ export interface RecipeRow {
   name: string;
   notes: string | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 export interface RecipeItemRow {
@@ -146,6 +154,7 @@ export interface RecipeItemRow {
   carbs_g: number | null;
   fat_g: number | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 export interface MealItemRow {
@@ -159,6 +168,7 @@ export interface MealItemRow {
   carbs_g: number | null;
   fat_g: number | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 export interface ActivityBlockRow {
@@ -173,6 +183,7 @@ export interface ActivityBlockRow {
   met_value: number;
   calories_active: number;
   created_at: string;
+  deleted_at: string | null;
 }
 
 export interface EngineStateWeeklyRow {
@@ -203,9 +214,7 @@ export interface DailyTargetRow {
 /**
  * Top-level Supabase `Database` shape — matches what
  * `supabase gen types typescript` would emit, so the client below stays
- * compatible when we switch over. The empty Views/Functions/Enums/
- * CompositeTypes maps are required by supabase-js's generics; without
- * them the typed query builder collapses to `never`.
+ * compatible when we switch over.
  */
 
 type TableDef<R, I, U> = {
@@ -215,23 +224,28 @@ type TableDef<R, I, U> = {
   Relationships: [];
 };
 
+type ViewDef<R> = {
+  Row: R;
+  Relationships: [];
+};
+
 export interface Database {
   public: {
     Tables: {
       profiles: TableDef<
         ProfileRow,
-        Omit<ProfileRow, "created_at" | "updated_at"> & { preferred_units?: ProfileRow["preferred_units"]; timezone?: string },
-        Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at">>
+        Omit<ProfileRow, "created_at" | "updated_at" | "deleted_at"> & { preferred_units?: ProfileRow["preferred_units"]; timezone?: string },
+        Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at" | "deleted_at">>
       >;
       goals: TableDef<
         GoalRow,
-        Omit<GoalRow, "id" | "created_at"> & { id?: string; status?: GoalStatus },
-        Partial<Omit<GoalRow, "id" | "user_id" | "created_at">>
+        Omit<GoalRow, "id" | "created_at" | "deleted_at"> & { id?: string; status?: GoalStatus },
+        Partial<Omit<GoalRow, "id" | "user_id" | "created_at" | "deleted_at">>
       >;
       weight_entries: TableDef<
         WeightEntryRow,
-        Omit<WeightEntryRow, "id" | "created_at"> & { id?: string; source?: WeightSource; note?: string | null },
-        Partial<Omit<WeightEntryRow, "id" | "user_id" | "created_at">>
+        Omit<WeightEntryRow, "id" | "created_at" | "deleted_at"> & { id?: string; source?: WeightSource; note?: string | null },
+        Partial<Omit<WeightEntryRow, "id" | "user_id" | "created_at" | "deleted_at">>
       >;
       foods: TableDef<
         FoodRow,
@@ -240,28 +254,28 @@ export interface Database {
       >;
       meals: TableDef<
         MealRow,
-        Omit<MealRow, "id" | "created_at"> & { id?: string },
-        Partial<Omit<MealRow, "id" | "user_id" | "created_at">>
+        Omit<MealRow, "id" | "created_at" | "deleted_at"> & { id?: string },
+        Partial<Omit<MealRow, "id" | "user_id" | "created_at" | "deleted_at">>
       >;
       meal_items: TableDef<
         MealItemRow,
-        Omit<MealItemRow, "id" | "created_at"> & { id?: string },
-        Partial<Omit<MealItemRow, "id" | "meal_id" | "created_at">>
+        Omit<MealItemRow, "id" | "created_at" | "deleted_at"> & { id?: string },
+        Partial<Omit<MealItemRow, "id" | "meal_id" | "created_at" | "deleted_at">>
       >;
       recipes: TableDef<
         RecipeRow,
-        Omit<RecipeRow, "id" | "created_at"> & { id?: string },
-        Partial<Omit<RecipeRow, "id" | "user_id" | "created_at">>
+        Omit<RecipeRow, "id" | "created_at" | "deleted_at"> & { id?: string },
+        Partial<Omit<RecipeRow, "id" | "user_id" | "created_at" | "deleted_at">>
       >;
       recipe_items: TableDef<
         RecipeItemRow,
-        Omit<RecipeItemRow, "id" | "created_at"> & { id?: string },
-        Partial<Omit<RecipeItemRow, "id" | "recipe_id" | "created_at">>
+        Omit<RecipeItemRow, "id" | "created_at" | "deleted_at"> & { id?: string },
+        Partial<Omit<RecipeItemRow, "id" | "recipe_id" | "created_at" | "deleted_at">>
       >;
       activity_blocks: TableDef<
         ActivityBlockRow,
-        Omit<ActivityBlockRow, "id" | "created_at"> & { id?: string },
-        Partial<Omit<ActivityBlockRow, "id" | "user_id" | "created_at">>
+        Omit<ActivityBlockRow, "id" | "created_at" | "deleted_at"> & { id?: string },
+        Partial<Omit<ActivityBlockRow, "id" | "user_id" | "created_at" | "deleted_at">>
       >;
       engine_state_weekly: TableDef<
         EngineStateWeeklyRow,
@@ -273,8 +287,26 @@ export interface Database {
         Omit<DailyTargetRow, "id" | "created_at" | "planned_training_flag"> & { id?: string; planned_training_flag?: boolean },
         Partial<Omit<DailyTargetRow, "id" | "user_id" | "created_at">>
       >;
+      body_measurements: TableDef<
+        BodyMeasurementRow,
+        Omit<BodyMeasurementRow, "id" | "created_at" | "deleted_at"> & { id?: string; source?: WeightSource },
+        Partial<Omit<BodyMeasurementRow, "id" | "user_id" | "created_at" | "deleted_at">>
+      >;
+      progress_photos: TableDef<
+        ProgressPhotoRow,
+        Omit<ProgressPhotoRow, "id" | "created_at" | "deleted_at"> & { id?: string },
+        Partial<Omit<ProgressPhotoRow, "id" | "user_id" | "created_at" | "deleted_at">>
+      >;
     };
-    Views: Record<string, never>;
+    Views: {
+      /**
+       * Aggregated daily intake from meal_items via meals.
+       * Source: 0002_meals.sql + updated in 0008_soft_delete.sql.
+       * security_invoker = on → query runs as the calling user, so RLS
+       * on meals/meal_items automatically scopes it to auth.uid().
+       */
+      v_daily_intake: ViewDef<DailyIntakeRow>;
+    };
     Functions: Record<string, never>;
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

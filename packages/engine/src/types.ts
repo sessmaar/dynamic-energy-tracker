@@ -95,6 +95,9 @@ export interface WeightEntry {
 export interface IntakeEntry {
   readonly date: IsoDate;
   readonly calories: Kcal;
+  readonly carbsG?: number | null;
+  readonly proteinG?: number | null;
+  readonly fatG?: number | null;
 }
 
 export interface ActivityBlock {

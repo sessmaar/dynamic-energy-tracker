@@ -51,7 +51,7 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
   const router = useRouter();
   const [state, setState] = useState<
     | { kind: "loading" }
-    | { kind: "ready"; weights: WeightEntry[]; intake: IntakeEntry[]; profile: { heightCm: number; age: number; sex: "male" | "female" } | null; activityLevel: ActivityLevel; latestMeasurement: BodyMeasurement | null; goalKgPerWeek: number }
+    | { kind: "ready"; weights: WeightEntry[]; intake: IntakeEntry[]; profile: { heightCm: number; age: number; sex: "male" | "female" } | null; timezone: string; activityLevel: ActivityLevel; latestMeasurement: BodyMeasurement | null; goalKgPerWeek: number }
     | { kind: "empty" }
     | { kind: "error"; message: string }
   >({ kind: "loading" });
@@ -84,6 +84,7 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
             age: account.profile.age,
             sex: account.profile.sex,
           },
+          timezone: account.timezone,
           activityLevel: account.activityLevel,
           latestMeasurement,
           goalKgPerWeek: goal?.kgPerWeek ?? 0,
@@ -156,7 +157,7 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
     x: i / Math.max(trend.length - 1, 1), y: t.trend,
   }));
 
-  const convergence = getConvergenceStatus(state.intake, state.weights, state.profile!.timezone);
+  const convergence = getConvergenceStatus(state.intake, state.weights, state.timezone);
 
   return (
     <>
@@ -295,8 +296,11 @@ const mondayWindows = (startIso: string, endIso: string) => {
 };
 
 const getConvergenceStatus = (intake: IntakeEntry[], weights: WeightEntry[], timezone: string) => {
-  const today = new Date().toLocaleString("en-US", { timeZone: timezone }).split(',')[0];
-  const [m, d, y] = today.split('/');
+  const today = new Date().toLocaleString("en-US", { timeZone: timezone }).split(',')[0] || "";
+  const parts = today.split('/');
+  const m = parts[0] || "01";
+  const d = parts[1] || "01";
+  const y = parts[2] || "2026";
   const todayIso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
   
   const start = new Date(`${todayIso}T00:00:00Z`);

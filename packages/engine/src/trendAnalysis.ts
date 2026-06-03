@@ -372,8 +372,8 @@ export const fullTrajectory = (
 ): { analysis: TrendAnalysis; verdict: TrajectoryVerdict } | null => {
   const analysis = analyzeTrend(weights, {
     ...(opts.windowDays !== undefined ? { windowDays: opts.windowDays } : {}),
-    ...(opts.ewmaAlpha !== undefined ? { ewmaAlpha: opts.ewmaAlpha } : {}),
-    intake: opts.intake,
+    ...(opts.ewmaAlpha !== undefined ? { alpha: opts.ewmaAlpha } : {}),
+    ...(opts.intake !== undefined ? { intake: opts.intake } : {}),
   });
   if (!analysis) return null;
   const expectedRatePerWeek = opts.intake && opts.tdee != null

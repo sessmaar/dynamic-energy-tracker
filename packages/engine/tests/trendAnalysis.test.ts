@@ -27,7 +27,7 @@ describe("analyzeTrend — slope recovery", () => {
       const d = new Date("2026-06-01T00:00:00Z");
       d.setUTCDate(d.getUTCDate() + i);
       return { date: isoDate(d.toISOString().slice(0, 10)), weight: kg(v) };
-    }), { ewmaAlpha: 1 })!; // alpha=1 means trend == raw, so we test the regression cleanly
+    }), { alpha: 0 })!; // alpha=0 means no decay (raw OLS), so we test the regression cleanly
     expect(a.ratePerWeek).toBeCloseTo(-0.35, 1);
     expect(a.ratePerWeekSE).toBeLessThan(0.05);
   });
@@ -38,7 +38,7 @@ describe("analyzeTrend — slope recovery", () => {
   });
 
   it("residual SD reflects noise — flat input has near-zero residuals", () => {
-    const a = analyzeTrend(series(Array(14).fill(80)), { ewmaAlpha: 1 })!;
+    const a = analyzeTrend(series(Array(14).fill(80)), { alpha: 0 })!;
     expect(a.residualSDKg).toBeLessThan(0.01);
   });
 
@@ -53,7 +53,7 @@ describe("analyzeTrend — slope recovery", () => {
 
 describe("classifyTrajectory", () => {
   it("flat data → maintaining", () => {
-    const a = analyzeTrend(series(Array(14).fill(80)), { ewmaAlpha: 1 })!;
+    const a = analyzeTrend(series(Array(14).fill(80)), { alpha: 0 })!;
     const v = classifyTrajectory(a);
     expect(v.status).toBe("maintaining");
     expect(v.cue).toMatch(/HOLDING/);
@@ -65,7 +65,7 @@ describe("classifyTrajectory", () => {
       const d = new Date("2026-06-01T00:00:00Z");
       d.setUTCDate(d.getUTCDate() + i);
       return { date: isoDate(d.toISOString().slice(0, 10)), weight: kg(v) };
-    }), { windowDays: 28, ewmaAlpha: 1 })!;
+    }), { windowDays: 28, alpha: 0 })!;
     const v = classifyTrajectory(a);
     expect(v.status).toBe("losing");
     expect(v.cue).toMatch(/LOSING/);
@@ -79,7 +79,7 @@ describe("classifyTrajectory", () => {
     const noisy = Array.from({ length: 14 }, (_, i) =>
       80 + (i % 2 === 0 ? 1.5 : -1.5) + 0.05 * i,
     );
-    const a = analyzeTrend(series(noisy), { ewmaAlpha: 1 })!;
+    const a = analyzeTrend(series(noisy), { alpha: 0 })!;
     const v = classifyTrajectory(a);
     expect(["inconclusive", "maintaining"]).toContain(v.status);
   });
@@ -90,7 +90,7 @@ describe("classifyTrajectory", () => {
       const d = new Date("2026-06-01T00:00:00Z");
       d.setUTCDate(d.getUTCDate() + i);
       return { date: isoDate(d.toISOString().slice(0, 10)), weight: kg(v) };
-    }), { windowDays: 28, ewmaAlpha: 1 })!;
+    }), { windowDays: 28, alpha: 0 })!;
     const v = classifyTrajectory(a, { goalRatePerWeek: -0.49 }); // -0.07 * 7
     expect(v.onTrack).toBe(true);
     expect(v.cue).toMatch(/on target/);

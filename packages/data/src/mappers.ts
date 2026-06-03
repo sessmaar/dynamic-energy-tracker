@@ -95,6 +95,9 @@ export const weightFromRow = (row: WeightEntryRow): WeightEntry => ({
 export const intakeFromRow = (row: DailyIntakeRow): IntakeEntry => ({
   date: isoDate(row.date),
   calories: kcal(row.calories),
+  carbsG: row.carbs_g,
+  proteinG: row.protein_g,
+  fatG: row.fat_g,
 });
 
 // Food / meal mappers — these stay close to row shape (not engine

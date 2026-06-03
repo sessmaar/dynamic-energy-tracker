@@ -541,10 +541,10 @@ export const selectConvergenceStatus = (s: EngineState): {
 
   if (daysWithBoth < 3) {
     daysRemaining = 3 - daysWithBoth;
-    nextAlpha = 0.4;
+    nextAlpha = unit(0.4);
   } else if (daysWithBoth < 5) {
     daysRemaining = 5 - daysWithBoth;
-    nextAlpha = 0.6;
+    nextAlpha = unit(0.6);
   }
 
   return { daysRemaining, currentAlpha, nextAlpha, isConverged };

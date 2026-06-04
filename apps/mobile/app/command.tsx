@@ -13,6 +13,7 @@ import {
   selectBmr, selectComposition, selectDailyTarget, selectTodayActiveCalories, selectTodayIntake,
   selectTodayMacros, selectTrajectory, selectConvergenceStatus, useEngine,
 } from "@/store/engineStore";
+import { useShallow } from "zustand/react/shallow";
 
 const fmt = (n: number | null | undefined, suffix = "") =>
   n == null ? "—" : `${Math.round(n).toLocaleString()}${suffix}`;
@@ -29,10 +30,10 @@ export default function Command() {
   const deleteMeal = useEngine((s) => s.deleteMeal);
   const hydrate = useEngine((s) => s.hydrate);
   const macroTargets = useEngine((s) => s.macroTargets);
-  const todayMacros = useEngine(selectTodayMacros);
-  const trajectory = useEngine(selectTrajectory);
-  const composition = useEngine(selectComposition);
-  const convergence = useEngine(selectConvergenceStatus);
+  const todayMacros = useEngine(useShallow(selectTodayMacros));
+  const trajectory = useEngine(useShallow(selectTrajectory));
+  const composition = useEngine(useShallow(selectComposition));
+  const convergence = useEngine(useShallow(selectConvergenceStatus));
 
   const fillFraction = target ? Math.min(intakeToday / target, 1.2) : 0;
   const net = target ? intakeToday - target : 0;

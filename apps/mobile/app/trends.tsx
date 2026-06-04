@@ -11,6 +11,7 @@ import { repos } from "@/lib/supabase";
 import {
   selectDailyTarget, selectTodayMacros, selectTrajectory, useEngine,
 } from "@/store/engineStore";
+import { useShallow } from "zustand/react/shallow";
 
 /**
  * Multi-week trend view. Three stacked panels:
@@ -33,9 +34,9 @@ export default function Trends() {
   const intake = useEngine((s) => s.intake);
   const timezone = useEngine((s) => s.timezone);
   const target = useEngine(selectDailyTarget);
-  const macros = useEngine(selectTodayMacros);
-  const macroTargets = useEngine((s) => s.macroTargets);
-  const trajectory = useEngine(selectTrajectory);
+  const macros = useEngine(useShallow(selectTodayMacros));
+  const macroTargets = useEngine(useShallow((s) => s.macroTargets));
+  const trajectory = useEngine(useShallow(selectTrajectory));
 
   const [history, setHistory] = useState<EngineStateWeeklyRow[]>([]);
 

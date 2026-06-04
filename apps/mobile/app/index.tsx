@@ -1,33 +1,59 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { Redirect } from "expo-router";
+import { useRouter } from "expo-router";
 import { useAuth } from "@/context/auth";
 import { Button, colors, gap, Screen, Text } from "@/design";
 import { useEngine } from "@/store/engineStore";
+import { repos } from "@/lib/supabase";
+import { isoDate } from "@dynamic-energy/engine";
 
 /**
  * Root route. Four states:
  *   1. Auth still hydrating from secure storage → spinner.
  *   2. No session → /sign-in.
  *   3. Signed in, store hydrate failed → error card with retry / sign-out.
- *   4. Signed in, hydrated → /onboarding (no profile) or /command.
+ *   4. Signed in, hydrated → /onboarding (no profile or no weights) or /command.
  */
 export default function Index() {
   const { session, userId, signOut } = useAuth();
+  const router = useRouter();
   const hydrate = useEngine((s) => s.hydrate);
   const loading = useEngine((s) => s.loading);
-  const profile = useEngine((s) => s.profile);
   const error = useEngine((s) => s.error);
   const storedUserId = useEngine((s) => s.userId);
+  const [decided, setDecided] = useState(false);
 
   useEffect(() => {
     if (userId && userId !== storedUserId) void hydrate(userId);
   }, [userId, storedUserId, hydrate]);
 
+  useEffect(() => {
+    if (session === undefined) return;            // still hydrating
+    if (session === null) { router.replace("/sign-in"); return; }
+    if (!userId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const since = isoDate("1970-01-01");
+        const [account, weights] = await Promise.all([
+          repos.profile.getAccount(userId),
+          repos.weight.listSince(userId, since),
+        ]);
+        if (cancelled) return;
+        const onboarded = !!account && weights.length > 0;
+        router.replace(onboarded ? "/command" : "/onboarding");
+        setDecided(true);
+      } catch {
+        if (!cancelled) { router.replace("/onboarding"); setDecided(true); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [session, userId, router]);
+
   if (session === undefined) {
     return <Splash label="Restoring session…" />;
   }
-  if (!session) return <Redirect href="/sign-in" />;
+  if (!session) return <Splash label="Redirecting…" />;
 
   if (error) {
     return (
@@ -56,10 +82,10 @@ export default function Index() {
     );
   }
 
-  if (loading || storedUserId !== userId) {
+  if (loading || storedUserId !== userId || !decided) {
     return <Splash label="Syncing your data…" />;
   }
-  return <Redirect href={profile ? "/command" : "/onboarding"} />;
+  return null;
 }
 
 const Splash = ({ label }: { label: string }) => (

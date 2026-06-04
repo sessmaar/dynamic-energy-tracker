@@ -96,7 +96,8 @@ const LiveDashboard = ({ userId, email }: { userId: string; email: string }) => 
           goalKgPerWeek: goal?.kgPerWeek ?? 0,
         });
       } catch (e) {
-        setState({ kind: "error", message: e instanceof Error ? e.message : String(e) });
+        const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? JSON.stringify(e);
+        setState({ kind: "error", message: msg });
       }
     })();
   }, [userId]);

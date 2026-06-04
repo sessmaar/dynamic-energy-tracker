@@ -13,7 +13,7 @@ import type { NextRequest } from "next/server";
  * Auth routes: /sign-in (redirect to /dashboard if already logged in)
  */
 
-const PROTECTED = ["/dashboard", "/log-meal", "/import", "/onboard"];
+const PROTECTED = ["/dashboard", "/log-meal", "/import", "/onboard", "/log-weight", "/convergence"];
 const AUTH_ROUTES = ["/sign-in"];
 
 function hasSession(request: NextRequest): boolean {
@@ -52,6 +52,8 @@ export const config = {
     "/log-meal/:path*",
     "/import/:path*",
     "/onboard/:path*",
+    "/log-weight/:path*",
+    "/convergence/:path*",
     "/sign-in/:path*",
     "/sign-in",
   ],

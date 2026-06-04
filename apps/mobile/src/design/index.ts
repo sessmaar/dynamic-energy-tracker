@@ -9,4 +9,5 @@ export { Button } from "./Button";
 export { MacroBar } from "./MacroBar";
 export { TrajectoryCard } from "./TrajectoryCard";
 export { BottomNav } from "./BottomNav";
-
+export * from "./theme";
+export { ThemeProvider, useTheme } from "./ThemeProvider";

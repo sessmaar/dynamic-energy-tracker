@@ -9,6 +9,9 @@ import {
 import type { BodyMeasurement, MealSummary, ProgressPhoto, RecipeSummary } from "@dynamic-energy/data";
 import { create } from "zustand";
 import { repos, supabase } from "@/lib/supabase";
+import { type Assessment } from "@/onboarding/assessment";
+import { buildOnboardingWrite } from "@/onboarding/persistence";
+import { saveReminderPrefs } from "@/onboarding/reminders";
 
 /**
  * Live store backed by Supabase via @dynamic-energy/data. Raw logs are
@@ -66,6 +69,9 @@ interface EngineState {
     goalKgPerWeek: number;
     timezone?: string;
   }) => Promise<void>;
+
+  /** Persist a full onboarding assessment, then hydrate. */
+  completeOnboarding: (assessment: Assessment) => Promise<void>;
 
   logWeight: (weightKg: number, date?: string) => Promise<void>;
   logIntake: (calories: number, date?: string) => Promise<void>;
@@ -299,6 +305,56 @@ export const useEngine = create<EngineState>((set, get) => ({
       date: localToday(tz),
       weightKg: input.initialWeightKg,
     });
+    await get().hydrate(userId);
+  },
+
+  completeOnboarding: async (assessment) => {
+    const userId = get().userId;
+    if (!userId) throw new Error("Not signed in");
+    const tz = Intl?.DateTimeFormat?.().resolvedOptions().timeZone ?? "UTC";
+    const today = localDateInTimezone(tz);
+    const w = buildOnboardingWrite(assessment, userId, tz, today);
+
+    await repos.profile.upsert({
+      userId: w.profile.userId,
+      sex: w.profile.sex,
+      dateOfBirth: w.profile.dateOfBirth,
+      heightCm: w.profile.heightCm,
+      initialWeightKg: w.profile.initialWeightKg,
+      activityLevel: w.profile.activityLevel,
+      timezone: w.profile.timezone,
+    });
+
+    await repos.goal.setActive({
+      userId: w.goal.userId,
+      goalType: w.goal.goalType,
+      rateKgPerWeek: Math.abs(w.goal.rateKgPerWeek),
+      startDate: isoDate(w.goal.startDate),
+      proteinGTarget: w.goal.proteinGTarget,
+      carbsGTarget: w.goal.carbsGTarget,
+      fatGTarget: w.goal.fatGTarget,
+    });
+
+    await repos.weight.log({
+      userId: w.weight.userId,
+      date: isoDate(w.weight.date),
+      weightKg: w.weight.weightKg,
+      note: w.weight.note,
+    });
+
+    if (w.bodyMeasurement) {
+      await repos.bodyMeasurement.log({
+        userId: w.bodyMeasurement.userId,
+        date: isoDate(w.bodyMeasurement.date),
+        neckCm: w.bodyMeasurement.neckCm,
+        waistCm: w.bodyMeasurement.waistCm,
+        hipCm: w.bodyMeasurement.hipCm,
+        weightKg: w.bodyMeasurement.weightKg,
+        bodyFatPct: w.bodyMeasurement.bodyFatPct,
+      });
+    }
+
+    await saveReminderPrefs(assessment.reminders);
     await get().hydrate(userId);
   },
 

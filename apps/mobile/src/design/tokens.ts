@@ -7,19 +7,19 @@
  */
 
 export const colors = {
-  bg:                  "#F8FAFC",
+  bg:                  "#FBFAF8",
   surface:             "#FFFFFF",
-  surfaceContainer:    "#ECEEF0",
-  surfaceContainerLow: "#F2F4F6",
-  fg:                  "#191C1E",
-  muted:               "#414755",
-  border:              "#C1C6D7",
-  accent:              "#0058BC",
-  accentSoft:          "rgba(0,88,188,0.10)",
-  fgSoft:              "rgba(25,28,30,0.06)",
-  secondary:           "#006875",
-  secondaryContainer:  "#00E3FD",
-  error:               "#BA1A1A",
+  surfaceContainer:    "#F2F1ED",
+  surfaceContainerLow: "#F6F5F1",
+  fg:                  "#1A1A18",
+  muted:               "#6B6A66",
+  border:              "#E6E4DE",
+  accent:              "#3B5BDB",
+  accentSoft:          "rgba(59,91,219,0.10)",
+  fgSoft:              "rgba(26,26,24,0.06)",
+  secondary:           "#2F9E44",
+  secondaryContainer:  "#51CF66",
+  error:               "#E03131",
   black:               "#000000",
 } as const;
 

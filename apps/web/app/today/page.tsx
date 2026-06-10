@@ -104,7 +104,7 @@ export default function TodayPage() {
           <ActionLink href="/log-meal" label="Log food" />
           <ActionLink href="/log-weight" label="Log weight" />
           <ActionLink href="/log-activity" label="Log activity" />
-          <ActionLink href="/profile" label="Profile" />
+          <ActionLink href="/import" label="Import Data" />\n          <ActionLink href="/profile" label="Profile" />
         </section>
 
         {/* Today's log */}

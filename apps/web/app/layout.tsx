@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./tokens.css";
+import { TabBar } from "@/components/TabBar";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -40,7 +41,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
-      <body>{children}</body>
+      <body>{children}<TabBar /></body>
     </html>
   );
 }

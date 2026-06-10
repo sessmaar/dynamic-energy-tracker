@@ -119,6 +119,49 @@ export const localRepos = {
     },
   },
 
+
+  coach: {
+    getContext(): string {
+      const state = useLocalStore.getState();
+      const profile = state.profile;
+      const goal = state.goal;
+      if (!profile || !goal) return "User profile or goal not set.";
+
+      const today = new Date().toISOString().slice(0, 10);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7);
+      const since = sevenDaysAgo.toISOString().slice(0, 10);
+
+      const weights = localRepos.weight.listSince(since);
+      const intake = localRepos.intake.listSince(since);
+
+      let context = `User Profile:
+- Sex: ${profile.sex}
+- Height: ${profile.heightCm} cm
+- Activity Level: ${profile.activityLevel}
+- Current Goal: ${goal.type} at ${goal.rateKgPerWeek} kg/week
+- Target Macros: P ${goal.proteinG}g, C ${goal.carbsG}g, F ${goal.fatG}g
+
+Last 7 days of logs (starting from ${since}):
+`;
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(sevenDaysAgo);
+        d.setUTCDate(d.getUTCDate() + i);
+        const dateStr = d.toISOString().slice(0, 10);
+        const w = weights.find(w => w.date === dateStr);
+        const in_ = intake.find(in_ => in_.date === dateStr);
+        
+        context += `- ${dateStr}: `;
+        if (w) context += `Weight: ${w.weight} kg. `;
+        if (in_) context += `Intake: ${in_.calories} kcal (P: ${in_.proteinG}g, C: ${in_.carbsG}g, F: ${in_.fatG}g). `;
+        if (!w && !in_) context += `No logs.`;
+        context += "\n";
+      }
+
+      return context;
+    }
+  },
   engine: {
     list(): LocalEngineWeek[] {
       return useLocalStore.getState().engineWeeks;

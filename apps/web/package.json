@@ -13,9 +13,11 @@
   "dependencies": {
     "@dynamic-energy/data": "*",
     "@dynamic-energy/engine": "*",
+    "@google/generative-ai": "^0.24.1",
     "next": "15.5.19",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

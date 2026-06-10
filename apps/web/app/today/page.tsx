@@ -27,9 +27,7 @@ export default function TodayPage() {
 
   // Engine inputs
   const sinceIso = (() => {
-    const d = new Date(`${today}T00:00:00Z`);
-    d.setUTCDate(d.getUTCDate() - 90);
-    return d.toISOString().slice(0, 10);
+    return "1970-01-01";
   })();
 
   const weights = localRepos.weight.listSince(sinceIso);

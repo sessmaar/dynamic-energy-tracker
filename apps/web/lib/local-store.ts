@@ -83,6 +83,7 @@ export interface LocalState {
   activities: LocalActivity[];
   engineWeeks: LocalEngineWeek[];
   foodsCache: FoodCandidate[];
+  geminiApiKey?: string;
 }
 
 export const initialLocalState: LocalState = {
@@ -94,6 +95,7 @@ export const initialLocalState: LocalState = {
   activities: [],
   engineWeeks: [],
   foodsCache: [],
+  geminiApiKey: undefined,
 };
 
 interface LocalActions {
@@ -108,6 +110,7 @@ interface LocalActions {
   upsertEngineWeek: (w: LocalEngineWeek) => void;
   cacheFood: (f: FoodCandidate) => void;
   loadState: (s: LocalState) => void;
+  setGeminiApiKey: (key: string | undefined) => void;
   reset: () => void;
 }
 
@@ -152,6 +155,7 @@ export const useLocalStore = create<LocalState & LocalActions>()(
         }),
 
       loadState: (next) => set(next),
+      setGeminiApiKey: (geminiApiKey) => set({ geminiApiKey }),
       reset: () => set(initialLocalState),
     }),
     {

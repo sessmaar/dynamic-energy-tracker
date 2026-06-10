@@ -30,9 +30,7 @@ export default function DashboardPage() {
   const tz = profile.timezone || "UTC";
 
   const since = (() => {
-    const d = new Date();
-    d.setUTCDate(d.getUTCDate() - 90);
-    return d.toISOString().slice(0, 10);
+    return "1970-01-01";
   })();
 
   const weights = localRepos.weight.listSince(since);

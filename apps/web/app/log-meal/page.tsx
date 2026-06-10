@@ -32,6 +32,7 @@ export default function LogMealPage() {
   const cacheFood = useLocalStore((s) => s.cacheFood);
   const cachedFoods = useLocalStore((s) => s.foodsCache);
 
+  const [mode, setMode] = useState<"quick" | "search">("quick");
   const [query, setQuery] = useState("");
   const debounced = useDebounced(query.trim());
   const [remote, setRemote] = useState<FoodCandidate[]>([]);
@@ -42,6 +43,9 @@ export default function LogMealPage() {
   const [grams, setGrams] = useState("100");
   const [mealType, setMealType] = useState<MealType>("snack");
   const [committing, setCommitting] = useState(false);
+
+  // Quick entry state
+  const [quick, setQuick] = useState({ name: "", kcal: "", protein: "", carbs: "", fat: "" });
 
   // Custom-food state
   const [creating, setCreating] = useState(false);
@@ -54,7 +58,7 @@ export default function LogMealPage() {
   }, [debounced, cachedFoods]);
 
   useEffect(() => {
-    if (!debounced || localMatches.length >= 5) { setRemote([]); return; }
+    if (mode !== "search" || !debounced || localMatches.length >= 5) { setRemote([]); return; }
     let cancelled = false;
     setSearching(true); setError(null);
     void (async () => {
@@ -68,7 +72,7 @@ export default function LogMealPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [debounced, localMatches.length]);
+  }, [debounced, localMatches.length, mode]);
 
   const nutrition = useMemo(() => {
     if (!selected) return null;
@@ -99,6 +103,31 @@ export default function LogMealPage() {
           proteinG: nutrition.proteinG,
           carbsG: nutrition.carbsG,
           fatG: nutrition.fatG,
+        }],
+      });
+      router.push("/today");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setCommitting(false);
+    }
+  };
+
+  const onQuickLog = () => {
+    const kcal = Number(quick.kcal);
+    if (!quick.kcal || isNaN(kcal) || kcal < 0) { setError("Calories required."); return; }
+    setCommitting(true);
+    try {
+      const today = localDateInTimezone(tz);
+      localRepos.meal.add({
+        date: today,
+        mealType,
+        items: [{
+          name: quick.name.trim() || "Quick add",
+          grams: null,
+          kcal: kcal,
+          proteinG: quick.protein ? Number(quick.protein) : null,
+          carbsG: quick.carbs ? Number(quick.carbs) : null,
+          fatG: quick.fat ? Number(quick.fat) : null,
         }],
       });
       router.push("/today");
@@ -151,16 +180,7 @@ export default function LogMealPage() {
             )}
           </section>
 
-          <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 8, display: "flex" }}>
-            {MEAL_TYPES.map((mt) => {
-              const active = mealType === mt.value;
-              return (
-                <button key={mt.value} onClick={() => setMealType(mt.value)} style={{ flex: 1, padding: 12, border: 0, background: active ? "var(--accent-soft)" : "transparent", color: active ? "var(--accent)" : "var(--muted)", fontSize: 13, fontWeight: 600, borderRadius: 10, cursor: "pointer" }}>
-                  {mt.label}
-                </button>
-              );
-            })}
-          </section>
+          <MealTypeSelector value={mealType} onChange={setMealType} />
 
           {error && <div style={{ color: "var(--viz-error)", fontSize: 13 }}>{error}</div>}
 
@@ -177,65 +197,110 @@ export default function LogMealPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--fg)", padding: "24px 16px 96px" }}>
-      <div style={{ maxWidth: 540, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ maxWidth: 540, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <header>
           <div style={{ color: "var(--accent)", fontSize: 12, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase" }}>Log food</div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Search</h1>
+          <div style={{ display: "flex", background: "var(--surface-container)", borderRadius: 14, padding: 4, marginTop: 8 }}>
+            <button onClick={() => setMode("quick")} style={tabBtn(mode === "quick")}>Quick log</button>
+            <button onClick={() => setMode("search")} style={tabBtn(mode === "search")}>Search</button>
+          </div>
         </header>
 
-        <input
-          type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="oats, chicken, banana…"
-          autoFocus
-          style={{ width: "100%", border: 0, borderBottom: "1px solid var(--border)", background: "transparent", color: "var(--fg)", fontSize: 22, fontWeight: 700, padding: "10px 0", outline: 0 }}
-        />
+        {mode === "quick" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+             <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 20 }}>
+               <label style={{ display: "block", color: "var(--muted)", fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Calories</label>
+               <input type="number" placeholder="0" value={quick.kcal} onChange={(e) => setQuick({ ...quick, kcal: e.target.value })} style={{ width: "100%", border: 0, borderBottom: "1px solid var(--border)", background: "transparent", color: "var(--fg)", fontSize: 40, fontWeight: 800, padding: "4px 0", outline: 0 }} />
+               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 16 }}>
+                 <CField label="Protein g" value={quick.protein} onChange={(v) => setQuick({ ...quick, protein: v })} numeric />
+                 <CField label="Carbs g" value={quick.carbs} onChange={(v) => setQuick({ ...quick, carbs: v })} numeric />
+                 <CField label="Fat g" value={quick.fat} onChange={(v) => setQuick({ ...quick, fat: v })} numeric />
+               </div>
+               <div style={{ marginTop: 16 }}>
+                 <CField label="Name (optional)" value={quick.name} onChange={(v) => setQuick({ ...quick, name: v })} />
+               </div>
+             </section>
 
-        {searching && <div style={{ color: "var(--muted)", fontSize: 13 }}>Searching…</div>}
-        {error && <div style={{ color: "var(--viz-error)", fontSize: 13 }}>{error}</div>}
+             <MealTypeSelector value={mealType} onChange={setMealType} />
 
-        {localMatches.length > 0 && (
-          <Section label="Your recents">
-            {localMatches.map((f) => <ResultRow key={f.sourceRef} f={f} onClick={() => setSelected(f)} />)}
-          </Section>
-        )}
-        {remote.length > 0 && (
-          <Section label="Open Food Facts">
-            {remote.map((f) => <ResultRow key={f.sourceRef} f={f} onClick={() => setSelected(f)} />)}
-          </Section>
-        )}
+             {error && <div style={{ color: "var(--viz-error)", fontSize: 13 }}>{error}</div>}
 
-        {!searching && debounced && localMatches.length === 0 && remote.length === 0 && (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 20 }}>
-            <p style={{ color: "var(--muted)", marginBottom: 12 }}>No matches for &quot;{debounced}&quot;.</p>
-            <button onClick={() => { setC((c) => ({ ...c, name: debounced })); setCreating(true); }} style={btnPrimary}>
-              Define custom food
-            </button>
+             <button onClick={onQuickLog} disabled={committing || !quick.kcal} style={{ ...btnPrimary, opacity: committing || !quick.kcal ? 0.5 : 1 }}>
+               {committing ? "Logging…" : "Quick log meal"}
+             </button>
           </div>
         )}
 
-        {creating && (
-          <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-            <CField label="Name" value={c.name} onChange={(v) => setC({ ...c, name: v })} />
-            <CField label="Brand (optional)" value={c.brand} onChange={(v) => setC({ ...c, brand: v })} />
-            <div style={{ display: "flex", gap: 12 }}>
-              <CField label="Kcal / 100g" value={c.kcal} onChange={(v) => setC({ ...c, kcal: v })} numeric />
-              <CField label="Protein g" value={c.protein} onChange={(v) => setC({ ...c, protein: v })} numeric />
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <CField label="Carbs g" value={c.carbs} onChange={(v) => setC({ ...c, carbs: v })} numeric />
-              <CField label="Fat g" value={c.fat} onChange={(v) => setC({ ...c, fat: v })} numeric />
-            </div>
-            <button onClick={onCreate} style={btnPrimary}>Save & choose portion</button>
-            <button onClick={() => setCreating(false)} style={btnGhost}>Cancel</button>
-          </section>
+        {mode === "search" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <input
+              type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="oats, chicken, banana…"
+              autoFocus
+              style={{ width: "100%", border: 0, borderBottom: "1px solid var(--border)", background: "transparent", color: "var(--fg)", fontSize: 22, fontWeight: 700, padding: "10px 0", outline: 0 }}
+            />
+
+            {searching && <div style={{ color: "var(--muted)", fontSize: 13 }}>Searching…</div>}
+            {error && <div style={{ color: "var(--viz-error)", fontSize: 13 }}>{error}</div>}
+
+            {localMatches.length > 0 && (
+              <Section label="Your recents">
+                {localMatches.map((f) => <ResultRow key={f.sourceRef} f={f} onClick={() => setSelected(f)} />)}
+              </Section>
+            )}
+            {remote.length > 0 && (
+              <Section label="Open Food Facts">
+                {remote.map((f) => <ResultRow key={f.sourceRef} f={f} onClick={() => setSelected(f)} />)}
+              </Section>
+            )}
+
+            {!searching && debounced && localMatches.length === 0 && remote.length === 0 && (
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 20 }}>
+                <p style={{ color: "var(--muted)", marginBottom: 12 }}>No matches for "{debounced}".</p>
+                <button onClick={() => { setC((c) => ({ ...c, name: debounced })); setCreating(true); }} style={btnPrimary}>
+                  Define custom food
+                </button>
+              </div>
+            )}
+
+            {creating && (
+              <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+                <CField label="Name" value={c.name} onChange={(v) => setC({ ...c, name: v })} />
+                <CField label="Brand (optional)" value={c.brand} onChange={(v) => setC({ ...c, brand: v })} />
+                <div style={{ display: "flex", gap: 12 }}>
+                  <CField label="Kcal / 100g" value={c.kcal} onChange={(v) => setC({ ...c, kcal: v })} numeric />
+                  <CField label="Protein g" value={c.protein} onChange={(v) => setC({ ...c, protein: v })} numeric />
+                </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <CField label="Carbs g" value={c.carbs} onChange={(v) => setC({ ...c, carbs: v })} numeric />
+                  <CField label="Fat g" value={c.fat} onChange={(v) => setC({ ...c, fat: v })} numeric />
+                </div>
+                <button onClick={onCreate} style={btnPrimary}>Save & choose portion</button>
+                <button onClick={() => setCreating(false)} style={btnGhost}>Cancel</button>
+              </section>
+            )}
+          </div>
         )}
 
-        <Link href="/today" style={{ ...btnGhost, display: "inline-block", textAlign: "center" as const, textDecoration: "none" }}>
+        <Link href="/today" style={{ ...btnGhost, display: "inline-block", textAlign: "center", textDecoration: "none" }}>
           Cancel
         </Link>
       </div>
     </main>
   );
 }
+
+const MealTypeSelector = ({ value, onChange }: { value: MealType; onChange: (v: MealType) => void }) => (
+  <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 8, display: "flex" }}>
+    {MEAL_TYPES.map((mt) => {
+      const active = value === mt.value;
+      return (
+        <button key={mt.value} onClick={() => onChange(mt.value)} style={{ flex: 1, padding: 12, border: 0, background: active ? "var(--accent-soft)" : "transparent", color: active ? "var(--accent)" : "var(--muted)", fontSize: 13, fontWeight: 600, borderRadius: 10, cursor: "pointer" }}>
+          {mt.label}
+        </button>
+      );
+    })}
+  </section>
+);
 
 const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <section>
@@ -269,6 +334,13 @@ const CField = ({ label, value, onChange, numeric }: { label: string; value: str
     <input type={numeric ? "number" : "text"} value={value} onChange={(e) => onChange(e.target.value)} style={{ border: 0, borderBottom: "1px solid var(--border)", background: "transparent", color: "var(--fg)", fontSize: 18, fontWeight: 700, padding: "4px 0", outline: 0 }} />
   </label>
 );
+
+const tabBtn = (active: boolean): React.CSSProperties => ({
+  flex: 1, padding: "10px 0", borderRadius: 10, border: 0,
+  background: active ? "var(--surface)" : "transparent",
+  color: active ? "var(--fg)" : "var(--muted)",
+  fontSize: 14, fontWeight: active ? 700 : 500, cursor: "pointer"
+});
 
 const btnPrimary: React.CSSProperties = { flex: 2, background: "var(--accent)", color: "#fff", border: 0, padding: "14px 20px", fontSize: 16, fontWeight: 700, borderRadius: 999, cursor: "pointer" };
 const btnGhost: React.CSSProperties = { flex: 1, background: "transparent", color: "var(--muted)", border: "1px solid var(--border)", padding: "14px 20px", fontSize: 15, fontWeight: 600, borderRadius: 999, cursor: "pointer" };

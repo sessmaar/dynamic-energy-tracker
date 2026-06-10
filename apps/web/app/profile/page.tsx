@@ -103,6 +103,14 @@ export default function ProfilePage() {
       </section>
 
       <section className="glass-card glass-card-lg" style={{ marginBottom: 16 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 0 }}>External Data</h3>
+        <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 12 }}>Import your history from Fitia or MyFitnessPal.</p>
+        <Link href="/import" style={{ ...btn, display: "inline-block", textAlign: "center", textDecoration: "none", background: "var(--surface-container)", color: "var(--fg)" }}>
+          Import from other apps
+        </Link>
+      </section>
+
+      <section className="glass-card glass-card-lg" style={{ marginBottom: 16 }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 0 }}>Backup</h3>
         <p style={{ color: "var(--muted)", fontSize: 13 }}>Your data lives in your browser. Export regularly so you don't lose it.</p>
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>

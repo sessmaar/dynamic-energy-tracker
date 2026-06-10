@@ -1,33 +1,14 @@
-// Polyfill localStorage for jsdom
-if (typeof global !== "undefined" && !global.localStorage) {
-  class LocalStorage {
-    private data: Record<string, string> = {};
-
-    getItem(key: string): string | null {
-      return this.data[key] ?? null;
-    }
-
-    setItem(key: string, value: string): void {
-      this.data[key] = String(value);
-    }
-
-    removeItem(key: string): void {
-      delete this.data[key];
-    }
-
-    clear(): void {
-      this.data = {};
-    }
-
-    key(index: number): string | null {
-      const keys = Object.keys(this.data);
-      return keys[index] ?? null;
-    }
-
-    get length(): number {
-      return Object.keys(this.data).length;
-    }
-  }
-
-  global.localStorage = new LocalStorage() as any;
+// jsdom doesn't expose localStorage on globalThis in vitest 4.x; provide a
+// minimal in-memory implementation so tests that touch zustand's persist
+// middleware work as expected.
+if (typeof globalThis !== "undefined" && !globalThis.localStorage) {
+  const data: Record<string, string> = {};
+  globalThis.localStorage = {
+    getItem: (k: string) => (k in data ? data[k]! : null),
+    setItem: (k: string, v: string) => { data[k] = String(v); },
+    removeItem: (k: string) => { delete data[k]; },
+    clear: () => { for (const k of Object.keys(data)) delete data[k]; },
+    key: (i: number) => Object.keys(data)[i] ?? null,
+    get length() { return Object.keys(data).length; },
+  } as Storage;
 }

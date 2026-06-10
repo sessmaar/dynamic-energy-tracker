@@ -4,62 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  type FoodCandidate, type FoodSummary, type MealType,
-  computeMealItemNutrition, searchOpenFoodFacts,
+  type FoodCandidate, computeMealItemNutrition, searchOpenFoodFacts,
 } from "@dynamic-energy/data";
-import { isoDate, localDateInTimezone } from "@dynamic-energy/engine";
-import { isConfigured, repos, supabase } from "@/lib/supabase";
-import type { Session } from "@supabase/supabase-js";
-
-/**
- * Web parity for mobile's /log-meal. Same three-step flow:
- *   query → results (cached + Open Food Facts) → portion picker.
- * Submission writes a meal row + meal_item via the shared data package.
- */
-export default function LogMealPage() {
-  const router = useRouter();
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
-
-  useEffect(() => {
-    if (!isConfigured) return;
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const sub = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.data.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (session === null) {
-      router.replace("/sign-in");
-    }
-  }, [session, router]);
-
-  if (!isConfigured) return <Shell><Empty title="BACKEND NOT CONFIGURED" body="Set NEXT_PUBLIC_SUPABASE_* in apps/web/.env.local." /></Shell>;
-  if (session === undefined || session === null) return <Shell><Empty title="…" body="Restoring session." /></Shell>;
-  return <Shell><MealLogger userId={session.user.id} /></Shell>;
-}
-
-// ------------------------------------------------------------------------
-
-type SelectedFood =
-  | { kind: "local"; food: FoodSummary }
-  | { kind: "remote"; candidate: FoodCandidate };
-
-const toFood = (s: SelectedFood) =>
-  s.kind === "local" ? s.food : {
-    id: "", name: s.candidate.name, brand: s.candidate.brand,
-    kcalPer100g: s.candidate.kcalPer100g,
-    proteinPer100g: s.candidate.proteinPer100g,
-    carbsPer100g: s.candidate.carbsPer100g,
-    fatPer100g: s.candidate.fatPer100g,
-    commonUnit: null, commonUnitGrams: null,
-  };
-
-const MEAL_TYPES: { value: MealType; label: string }[] = [
-  { value: "breakfast", label: "Morn"  },
-  { value: "lunch",     label: "Noon"  },
-  { value: "dinner",    label: "Eve"   },
-  { value: "snack",     label: "Snack" },
-];
+import { localDateInTimezone } from "@dynamic-energy/engine";
+import { useLocalStore, type MealType } from "@/lib/local-store";
+import { localRepos } from "@/lib/local-repos";
 
 const useDebounced = <T,>(value: T, ms = 350): T => {
   const [v, setV] = useState(value);
@@ -70,16 +19,26 @@ const useDebounced = <T,>(value: T, ms = 350): T => {
   return v;
 };
 
-const MealLogger = ({ userId }: { userId: string }) => {
+const MEAL_TYPES: { value: MealType; label: string }[] = [
+  { value: "breakfast", label: "Breakfast" },
+  { value: "lunch",     label: "Lunch" },
+  { value: "dinner",    label: "Dinner" },
+  { value: "snack",     label: "Snack" },
+];
+
+export default function LogMealPage() {
   const router = useRouter();
+  const tz = useLocalStore((s) => s.profile?.timezone ?? "UTC");
+  const cacheFood = useLocalStore((s) => s.cacheFood);
+  const cachedFoods = useLocalStore((s) => s.foodsCache);
+
   const [query, setQuery] = useState("");
   const debounced = useDebounced(query.trim());
-  const [local, setLocal] = useState<FoodSummary[]>([]);
   const [remote, setRemote] = useState<FoodCandidate[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [selected, setSelected] = useState<SelectedFood | null>(null);
+  const [selected, setSelected] = useState<FoodCandidate | null>(null);
   const [grams, setGrams] = useState("100");
   const [mealType, setMealType] = useState<MealType>("snack");
   const [committing, setCommitting] = useState(false);
@@ -88,20 +47,20 @@ const MealLogger = ({ userId }: { userId: string }) => {
   const [creating, setCreating] = useState(false);
   const [c, setC] = useState({ name: "", brand: "", kcal: "", protein: "", carbs: "", fat: "" });
 
+  const localMatches = useMemo(() => {
+    if (!debounced) return [];
+    const q = debounced.toLowerCase();
+    return cachedFoods.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 8);
+  }, [debounced, cachedFoods]);
+
   useEffect(() => {
-    if (!debounced) { setLocal([]); setRemote([]); return; }
+    if (!debounced || localMatches.length >= 5) { setRemote([]); return; }
     let cancelled = false;
     setSearching(true); setError(null);
     void (async () => {
       try {
-        const l = await repos.food.searchLocal(debounced, 8);
-        if (cancelled) return;
-        setLocal(l);
-        if (l.length < 5) {
-          const r = await searchOpenFoodFacts(debounced, 12);
-          if (cancelled) return;
-          setRemote(r);
-        } else setRemote([]);
+        const r = await searchOpenFoodFacts(debounced, 12);
+        if (!cancelled) setRemote(r);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       } finally {
@@ -109,333 +68,207 @@ const MealLogger = ({ userId }: { userId: string }) => {
       }
     })();
     return () => { cancelled = true; };
-  }, [debounced]);
+  }, [debounced, localMatches.length]);
 
   const nutrition = useMemo(() => {
     if (!selected) return null;
     const g = Number(grams);
     if (!Number.isFinite(g) || g <= 0) return null;
-    return computeMealItemNutrition(toFood(selected), g);
+    return computeMealItemNutrition({
+      kcalPer100g: selected.kcalPer100g,
+      proteinPer100g: selected.proteinPer100g,
+      carbsPer100g: selected.carbsPer100g,
+      fatPer100g: selected.fatPer100g,
+    }, g);
   }, [selected, grams]);
 
-  const onCreate = async () => {
-    if (!c.name.trim() || !Number.isFinite(Number(c.kcal)) || Number(c.kcal) < 0) {
-      setError("Name and kcal/100g required."); return;
-    }
-    try {
-      const food = await repos.food.createCustom({
-        userId,
-        name: c.name.trim(),
-        brand: c.brand.trim() || undefined,
-        kcalPer100g: Number(c.kcal),
-        proteinPer100g: c.protein ? Number(c.protein) : undefined,
-        carbsPer100g:   c.carbs   ? Number(c.carbs)   : undefined,
-        fatPer100g:     c.fat     ? Number(c.fat)     : undefined,
-      });
-      setCreating(false);
-      setSelected({ kind: "local", food });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
-
-  const onCommit = async () => {
+  const onCommit = () => {
     if (!selected || !nutrition) return;
     setCommitting(true); setError(null);
     try {
-      let foodId: string | undefined;
-      if (selected.kind === "local") {
-        foodId = selected.food.id;
-      } else {
-        const cached = await repos.food.upsertCandidate(selected.candidate);
-        foodId = cached.id;
-      }
-      const food = toFood(selected);
-      // Use browser-resolved timezone for the local date — matches the engine helper.
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      await repos.meal.logMeal({
-        userId,
-        date: localDateInTimezone(tz),
+      cacheFood(selected);
+      const today = localDateInTimezone(tz);
+      localRepos.meal.add({
+        date: today,
         mealType,
         items: [{
-          foodId,
-          name: food.name + (food.brand ? ` · ${food.brand}` : ""),
+          foodId: selected.sourceRef,
+          name: selected.name + (selected.brand ? ` · ${selected.brand}` : ""),
           grams: Number(grams),
           kcal: nutrition.kcal,
-          proteinG: nutrition.proteinG ?? undefined,
-          carbsG: nutrition.carbsG ?? undefined,
-          fatG: nutrition.fatG ?? undefined,
+          proteinG: nutrition.proteinG,
+          carbsG: nutrition.carbsG,
+          fatG: nutrition.fatG,
         }],
       });
-      router.push("/dashboard");
+      router.push("/today");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setCommitting(false);
     }
   };
 
-  // --- Selected: portion + meal slot view ---
+  const onCreate = () => {
+    if (!c.name.trim() || !Number.isFinite(Number(c.kcal)) || Number(c.kcal) < 0) {
+      setError("Name and kcal/100g required."); return;
+    }
+    const custom: FoodCandidate = {
+      sourceRef: `custom-${Date.now()}`,
+      source: "off",
+      name: c.name.trim(),
+      brand: c.brand.trim() || null,
+      servingSizeG: null,
+      kcalPer100g: Number(c.kcal),
+      proteinPer100g: c.protein ? Number(c.protein) : null,
+      carbsPer100g: c.carbs ? Number(c.carbs) : null,
+      fatPer100g: c.fat ? Number(c.fat) : null,
+    };
+    cacheFood(custom);
+    setSelected(custom);
+    setCreating(false);
+  };
+
   if (selected) {
-    const food = toFood(selected);
     return (
-      <>
-        <Header eyebrow="Logger · Portion" title="ENTER" />
-        <div className="card card-lg" style={{ marginBottom: "var(--gap-md)" }}>
-          <span className="meta">{food.brand ?? selected.kind.toUpperCase()}</span>
-          <h2 className="h3" style={{ marginTop: 4 }}>{food.name}</h2>
-          <div className="row" style={{ gap: "var(--gap-lg)", marginTop: "var(--gap-sm)" }}>
-            <Stat label="KCAL/100G" value={Math.round(food.kcalPer100g).toString()} />
-            <Stat label="P" value={food.proteinPer100g?.toFixed(1) ?? "—"} />
-            <Stat label="C" value={food.carbsPer100g?.toFixed(1) ?? "—"} />
-            <Stat label="F" value={food.fatPer100g?.toFixed(1) ?? "—"} />
-          </div>
-        </div>
+      <main style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--fg)", padding: "24px 16px 96px" }}>
+        <div style={{ maxWidth: 540, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+          <header>
+            <div style={{ color: "var(--accent)", fontSize: 12, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase" }}>Portion</div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{selected.name}</h1>
+            {selected.brand && <div style={{ color: "var(--muted)", fontSize: 13 }}>{selected.brand}</div>}
+          </header>
 
-        <div className="card card-lg" style={{ marginBottom: "var(--gap-md)" }}>
-          <span className="meta">Portion · Grams</span>
-          <input
-            type="number"
-            value={grams}
-            onChange={(e) => setGrams(e.target.value)}
-            style={inputBigNumber}
-          />
-          {nutrition && (
-            <div className="row" style={{ gap: "var(--gap-lg)", marginTop: "var(--gap-md)" }}>
-              <Stat label="THIS PORTION" value={`${nutrition.kcal} KCAL`} accent />
-              <Stat label="P" value={nutrition.proteinG?.toString() ?? "—"} />
-              <Stat label="C" value={nutrition.carbsG?.toString() ?? "—"} />
-              <Stat label="F" value={nutrition.fatG?.toString() ?? "—"} />
-            </div>
-          )}
-        </div>
+          <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 20 }}>
+            <label style={{ display: "block", color: "var(--muted)", fontSize: 13, fontWeight: 500, marginBottom: 6 }}>Grams</label>
+            <input type="number" value={grams} onChange={(e) => setGrams(e.target.value)} style={{ width: "100%", border: 0, borderBottom: "1px solid var(--border)", background: "transparent", color: "var(--fg)", fontSize: 40, fontWeight: 800, padding: "4px 0", outline: 0 }} />
+            {nutrition && (
+              <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
+                <Metric label="Kcal" value={`${nutrition.kcal}`} color="var(--accent)" />
+                <Metric label="P" value={`${nutrition.proteinG ?? "—"}g`} color="var(--viz-protein)" />
+                <Metric label="C" value={`${nutrition.carbsG ?? "—"}g`} color="var(--viz-carbs)" />
+                <Metric label="F" value={`${nutrition.fatG ?? "—"}g`} color="var(--viz-fat)" />
+              </div>
+            )}
+          </section>
 
-        <div className="card card-lg" style={{ marginBottom: "var(--gap-lg)" }}>
-          <span className="meta">Meal Slot</span>
-          <div className="row" style={{ marginTop: 8, border: "0.5px solid var(--border)" }}>
-            {MEAL_TYPES.map((mt, i) => {
+          <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 8, display: "flex" }}>
+            {MEAL_TYPES.map((mt) => {
               const active = mealType === mt.value;
               return (
-                <button
-                  key={mt.value}
-                  onClick={() => setMealType(mt.value)}
-                  style={{
-                    flex: 1, padding: 14, background: active ? "var(--accent-soft)" : "transparent",
-                    border: 0, borderLeft: i === 0 ? 0 : "0.5px solid var(--border)",
-                    color: active ? "var(--accent)" : "var(--muted)",
-                    fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.1em",
-                    fontSize: 11, cursor: "pointer",
-                  }}
-                >
+                <button key={mt.value} onClick={() => setMealType(mt.value)} style={{ flex: 1, padding: 12, border: 0, background: active ? "var(--accent-soft)" : "transparent", color: active ? "var(--accent)" : "var(--muted)", fontSize: 13, fontWeight: 600, borderRadius: 10, cursor: "pointer" }}>
                   {mt.label}
                 </button>
               );
             })}
+          </section>
+
+          {error && <div style={{ color: "var(--viz-error)", fontSize: 13 }}>{error}</div>}
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setSelected(null)} style={btnGhost}>Back</button>
+            <button onClick={onCommit} disabled={committing || !nutrition} style={{ ...btnPrimary, opacity: committing || !nutrition ? 0.5 : 1 }}>
+              {committing ? "Logging…" : "Log meal"}
+            </button>
           </div>
         </div>
-
-        {error && <p className="meta" style={{ color: "var(--accent)" }}>{error}</p>}
-        <div className="col" style={{ gap: "var(--gap-md)" }}>
-          <button onClick={onCommit} disabled={committing || !nutrition} style={btnPrimary}>
-            {committing ? "Logging…" : "Commit Meal"}
-          </button>
-          <button onClick={() => setSelected(null)} style={btnSecondary}>← Different Food</button>
-        </div>
-      </>
+      </main>
     );
   }
 
-  // --- Search view ---
   return (
-    <>
-      <Header eyebrow="Logger · Food" title="SEARCH" />
-      <div className="card card-lg" style={{ marginBottom: "var(--gap-md)" }}>
-        <span className="meta">Query</span>
+    <main style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--fg)", padding: "24px 16px 96px" }}>
+      <div style={{ maxWidth: 540, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+        <header>
+          <div style={{ color: "var(--accent)", fontSize: 12, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase" }}>Log food</div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Search</h1>
+        </header>
+
         <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="oats, chicken, banana…"
+          type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="oats, chicken, banana…"
           autoFocus
-          style={{
-            width: "100%", fontFamily: "var(--font-body)", fontSize: 22, fontWeight: 700,
-            background: "transparent", border: 0, borderBottom: "0.5px solid var(--border)",
-            color: "var(--fg)", outline: "none", padding: "8px 0", marginTop: 8,
-          }}
+          style={{ width: "100%", border: 0, borderBottom: "1px solid var(--border)", background: "transparent", color: "var(--fg)", fontSize: 22, fontWeight: 700, padding: "10px 0", outline: 0 }}
         />
-      </div>
 
-      {searching && <p className="meta" style={{ color: "var(--accent)" }}>Searching catalog…</p>}
-      {error && <p className="meta" style={{ color: "var(--accent)" }}>{error}</p>}
+        {searching && <div style={{ color: "var(--muted)", fontSize: 13 }}>Searching…</div>}
+        {error && <div style={{ color: "var(--viz-error)", fontSize: 13 }}>{error}</div>}
 
-      {local.length > 0 && (
-        <Section label="Cached Catalog">
-          {local.map((f) => (
-            <ResultRow key={f.id} title={f.name} subtitle={f.brand ?? "LOCAL"}
-              kcal={`${Math.round(f.kcalPer100g)} kcal/100g`}
-              onClick={() => setSelected({ kind: "local", food: f })}
-            />
-          ))}
-        </Section>
-      )}
-
-      {remote.length > 0 && (
-        <Section label="Open Food Facts">
-          {remote.map((r) => (
-            <ResultRow key={r.sourceRef} title={r.name} subtitle={r.brand ?? "OFF"}
-              kcal={`${Math.round(r.kcalPer100g)} kcal/100g`}
-              onClick={() => setSelected({ kind: "remote", candidate: r })}
-            />
-          ))}
-        </Section>
-      )}
-
-      {!searching && debounced && local.length === 0 && remote.length === 0 && (
-        <div className="card card-lg">
-          <p style={{ color: "var(--muted)", marginBottom: 16 }}>
-            No matches for &quot;{debounced}&quot;.
-          </p>
-          <button
-            onClick={() => { setC((c) => ({ ...c, name: debounced })); setCreating(true); }}
-            style={btnPrimary}
-          >
-            Define Custom Food
-          </button>
-        </div>
-      )}
-
-      {creating && (
-        <div className="card card-lg" style={{ marginTop: "var(--gap-md)" }}>
-          <span className="meta">Custom Food · Definition</span>
-          <div className="col" style={{ gap: "var(--gap-md)", marginTop: "var(--gap-sm)" }}>
-            <CustomField label="Name"            value={c.name}    onChange={(v) => setC({ ...c, name: v })} />
-            <CustomField label="Brand (optional)" value={c.brand}  onChange={(v) => setC({ ...c, brand: v })} />
-            <div className="row" style={{ gap: "var(--gap-md)" }}>
-              <CustomField label="kcal / 100g" numeric value={c.kcal}    onChange={(v) => setC({ ...c, kcal: v })} />
-              <CustomField label="Protein g"   numeric value={c.protein} onChange={(v) => setC({ ...c, protein: v })} />
-            </div>
-            <div className="row" style={{ gap: "var(--gap-md)" }}>
-              <CustomField label="Carbs g" numeric value={c.carbs} onChange={(v) => setC({ ...c, carbs: v })} />
-              <CustomField label="Fat g"   numeric value={c.fat}   onChange={(v) => setC({ ...c, fat: v })} />
-            </div>
-            <button onClick={onCreate} style={btnPrimary}>Save &amp; Pick Portion</button>
-            <button onClick={() => setCreating(false)} style={btnSecondary}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      <div className="col" style={{ gap: "var(--gap-md)", marginTop: "var(--gap-lg)" }}>
-        {!creating && (
-          <button onClick={() => setCreating(true)} style={btnSecondary}>+ Define Custom Food</button>
+        {localMatches.length > 0 && (
+          <Section label="Your recents">
+            {localMatches.map((f) => <ResultRow key={f.sourceRef} f={f} onClick={() => setSelected(f)} />)}
+          </Section>
         )}
-        <Link href="/dashboard" style={{ ...btnSecondary, display: "inline-block", textAlign: "center" }}>
+        {remote.length > 0 && (
+          <Section label="Open Food Facts">
+            {remote.map((f) => <ResultRow key={f.sourceRef} f={f} onClick={() => setSelected(f)} />)}
+          </Section>
+        )}
+
+        {!searching && debounced && localMatches.length === 0 && remote.length === 0 && (
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 20 }}>
+            <p style={{ color: "var(--muted)", marginBottom: 12 }}>No matches for &quot;{debounced}&quot;.</p>
+            <button onClick={() => { setC((c) => ({ ...c, name: debounced })); setCreating(true); }} style={btnPrimary}>
+              Define custom food
+            </button>
+          </div>
+        )}
+
+        {creating && (
+          <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+            <CField label="Name" value={c.name} onChange={(v) => setC({ ...c, name: v })} />
+            <CField label="Brand (optional)" value={c.brand} onChange={(v) => setC({ ...c, brand: v })} />
+            <div style={{ display: "flex", gap: 12 }}>
+              <CField label="Kcal / 100g" value={c.kcal} onChange={(v) => setC({ ...c, kcal: v })} numeric />
+              <CField label="Protein g" value={c.protein} onChange={(v) => setC({ ...c, protein: v })} numeric />
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <CField label="Carbs g" value={c.carbs} onChange={(v) => setC({ ...c, carbs: v })} numeric />
+              <CField label="Fat g" value={c.fat} onChange={(v) => setC({ ...c, fat: v })} numeric />
+            </div>
+            <button onClick={onCreate} style={btnPrimary}>Save & choose portion</button>
+            <button onClick={() => setCreating(false)} style={btnGhost}>Cancel</button>
+          </section>
+        )}
+
+        <Link href="/today" style={{ ...btnGhost, display: "inline-block", textAlign: "center" as const, textDecoration: "none" }}>
           Cancel
         </Link>
       </div>
-    </>
+    </main>
   );
-};
-
-// ------------------------------------------------------------------------
-
-const Shell = ({ children }: { children: React.ReactNode }) => (
-  <>
-    <header className="topnav">
-      <div className="container topnav-inner">
-        <span className="topnav-logo">DET<span style={{ color: "var(--accent)" }}>·</span>CONSOLE</span>
-        <nav>
-          <Link href="/">Demo</Link>
-          <Link href="/dashboard">Live</Link>
-          <Link href="/log-meal" className="active">Log Meal</Link>
-          <Link href="/import">Import</Link>
-        </nav>
-      </div>
-    </header>
-    <main className="container section" style={{ maxWidth: 720 }}>{children}</main>
-  </>
-);
-
-const Header = ({ eyebrow, title }: { eyebrow: string; title: string }) => (
-  <div style={{ marginBottom: "var(--gap-lg)" }}>
-    <span className="eyebrow">{eyebrow}</span>
-    <h1 className="h2" style={{ marginTop: 16 }}>{title}</h1>
-  </div>
-);
+}
 
 const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <section style={{ marginBottom: "var(--gap-lg)" }}>
-    <span className="meta" style={{ display: "block", marginBottom: 8 }}>{label}</span>
-    <div style={{ border: "0.5px solid var(--border)" }}>{children}</div>
+  <section>
+    <div style={{ color: "var(--muted)", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{label}</div>
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
+      {children}
+    </div>
   </section>
 );
 
-const ResultRow = ({ title, subtitle, kcal, onClick }: {
-  title: string; subtitle: string; kcal: string; onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    style={{
-      display: "block", width: "100%", padding: "12px 16px", textAlign: "left",
-      background: "transparent", border: 0, borderBottom: "0.5px solid var(--border)",
-      color: "var(--fg)", cursor: "pointer",
-    }}
-  >
-    <div style={{ fontSize: 14 }}>{title}</div>
-    <div className="row between" style={{ marginTop: 4 }}>
-      <span className="meta">{subtitle}</span>
-      <span className="meta" style={{ color: "var(--accent)" }}>{kcal}</span>
+const ResultRow = ({ f, onClick }: { f: FoodCandidate; onClick: () => void }) => (
+  <button onClick={onClick} style={{ display: "block", width: "100%", padding: "14px 16px", textAlign: "left", background: "transparent", border: 0, borderBottom: "1px solid var(--border)", color: "var(--fg)", cursor: "pointer" }}>
+    <div style={{ fontSize: 15, fontWeight: 600 }}>{f.name}</div>
+    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+      <span style={{ color: "var(--muted)", fontSize: 12 }}>{f.brand ?? "Generic"}</span>
+      <span style={{ color: "var(--accent)", fontSize: 12, fontWeight: 600 }}>{Math.round(f.kcalPer100g)} kcal/100g</span>
     </div>
   </button>
 );
 
-const Stat = ({ label, value, accent }: { label: string; value: string; accent?: boolean }) => (
-  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-    <span className="meta">{label}</span>
-    <span className="num" style={{ fontSize: 16, fontWeight: 700, color: accent ? "var(--accent)" : "var(--fg)" }}>
-      {value}
-    </span>
+const Metric = ({ label, value, color }: { label: string; value: string; color: string }) => (
+  <div style={{ flex: 1 }}>
+    <div style={{ color: "var(--muted)", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</div>
+    <div style={{ color, fontSize: 18, fontWeight: 800 }}>{value}</div>
   </div>
 );
 
-const CustomField = ({ label, value, onChange, numeric }: {
-  label: string; value: string; onChange: (v: string) => void; numeric?: boolean;
-}) => (
-  <div className="col flex1" style={{ gap: 4 }}>
-    <span className="meta">{label}</span>
-    <input
-      type={numeric ? "number" : "text"}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        background: "transparent", border: 0,
-        borderBottom: "0.5px solid var(--border)", color: "var(--fg)",
-        fontFamily: numeric ? "var(--font-mono)" : "var(--font-body)",
-        fontSize: 18, fontWeight: 700, outline: "none", padding: "6px 0",
-      }}
-    />
-  </div>
+const CField = ({ label, value, onChange, numeric }: { label: string; value: string; onChange: (v: string) => void; numeric?: boolean }) => (
+  <label style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+    <span style={{ color: "var(--muted)", fontSize: 13, fontWeight: 500 }}>{label}</span>
+    <input type={numeric ? "number" : "text"} value={value} onChange={(e) => onChange(e.target.value)} style={{ border: 0, borderBottom: "1px solid var(--border)", background: "transparent", color: "var(--fg)", fontSize: 18, fontWeight: 700, padding: "4px 0", outline: 0 }} />
+  </label>
 );
 
-const Empty = ({ title, body }: { title: string; body: string }) => (
-  <>
-    <span className="eyebrow">System</span>
-    <h1 className="h2" style={{ marginTop: 16 }}>{title}</h1>
-    <p style={{ color: "var(--muted)", marginTop: 24 }}>{body}</p>
-  </>
-);
-
-const inputBigNumber: React.CSSProperties = {
-  width: "100%", fontFamily: "var(--font-mono)", fontSize: 40, fontWeight: 800,
-  background: "transparent", border: 0, borderBottom: "0.5px solid var(--border)",
-  color: "var(--fg)", outline: "none", padding: "8px 0", marginTop: 8,
-};
-const btnPrimary: React.CSSProperties = {
-  background: "var(--accent)", color: "var(--bg)", border: "0.5px solid var(--accent)",
-  padding: "16px 24px", fontFamily: "var(--font-mono)", textTransform: "uppercase",
-  letterSpacing: "0.18em", fontSize: 12, fontWeight: 700, borderRadius: 4, cursor: "pointer",
-};
-const btnSecondary: React.CSSProperties = {
-  background: "var(--surface)", color: "var(--fg)", border: "0.5px solid var(--border)",
-  padding: "16px 24px", fontFamily: "var(--font-mono)", textTransform: "uppercase",
-  letterSpacing: "0.18em", fontSize: 12, fontWeight: 700, borderRadius: 4, cursor: "pointer",
-  textDecoration: "none",
-};
+const btnPrimary: React.CSSProperties = { flex: 2, background: "var(--accent)", color: "#fff", border: 0, padding: "14px 20px", fontSize: 16, fontWeight: 700, borderRadius: 999, cursor: "pointer" };
+const btnGhost: React.CSSProperties = { flex: 1, background: "transparent", color: "var(--muted)", border: "1px solid var(--border)", padding: "14px 20px", fontSize: 15, fontWeight: 600, borderRadius: 999, cursor: "pointer" };

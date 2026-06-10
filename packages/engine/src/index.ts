@@ -27,7 +27,7 @@ export {
 } from "./tdee";
 export {
   type WeeklyGoal,
-  dailyTargetFromTdee, distributeWeeklyTarget,
+  dailyTargetFromTdee, clampedDailyTargetFromTdee, distributeWeeklyTarget,
   dailyTargetWithActivityCredit, weeklyEnergyDelta, clampGoalToSafety,
 } from "./goal";
 export {
